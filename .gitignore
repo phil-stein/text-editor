@@ -1,0 +1,8 @@
+# vim-files
+*~
+*.swp
+*.swo
+
+# rar-files
+*.rar
+.zip
