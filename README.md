@@ -7,7 +7,7 @@ fonts in *"assets/fonts"* folder not mine <br>
 
 
 
-<img src="https://github.com/phil-stein/text-editor/tree/main/assets/screen01.png)" alt="screen-shot" width="160">
+<img src="https://github.com/phil-stein/text-editor/blob/main/assets/screen01.PNG" alt="screen-shot" width="160">
 
 
 
