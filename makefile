@@ -10,6 +10,7 @@ NAME = app.exe
 
 SRC_DIR  = src
 CORE_DIR = $(SRC_DIR)/core
+MATH_DIR = $(SRC_DIR)/math
 TEXT_DIR = $(SRC_DIR)/text
 APP_DIR  = $(SRC_DIR)/app
 
@@ -31,7 +32,8 @@ _OBJS += 				\
 # app
 _OBJS += 				\
 	main.o				\
-	app.o					
+	app.o					\
+	cmd.o
 
 # put the OBJ_DIR in front of the obj names
 OBJS = $(patsubst %,$(OBJ_DIR)/%,$(_OBJS))
@@ -47,7 +49,9 @@ LIBS     = $(patsubst %,-l %,$(_LIBS))
 _INC = 							  \
 		external					\
 		external/FREETYPE \
+		$(SRC_DIR)				\
 		$(SRC_DIR)/core		\
+		$(SRC_DIR)/math		\
 		$(SRC_DIR)/text		\
 		$(SRC_DIR)/app 
 INC = $(patsubst %,-I %,$(_INC))
@@ -91,3 +95,6 @@ clean:
 # clean and them make all
 cleanm: clean all
 
+run: clean all
+	@echo --- $(NAME) --- 
+	@$(NAME)

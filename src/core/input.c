@@ -1,6 +1,6 @@
 #include "input.h"
 
-#include "../../external/GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 // #include "stb/stb_ds.h"
 
 
@@ -8,6 +8,15 @@
  
 // current window
 GLFWwindow* window;
+
+#define KEY_CALLBACK_MAX 12
+key_callback key_callbacks[KEY_CALLBACK_MAX];
+int          key_callbacks_len = 0;
+
+#define UTF8_CALLBACK_MAX 12
+utf8_callback utf8_callbacks[UTF8_CALLBACK_MAX];
+int           utf8_callbacks_len = 0;
+
 
 // key state last frame 
 bool
@@ -42,10 +51,11 @@ f64 mouse_delta_y = 0;
 
 void input_init()
 {
-    window = get_window();
-    glfwSetKeyCallback(window, (GLFWkeyfun)key_callback);
+    window = window_get();
+    glfwSetKeyCallback(window, (GLFWkeyfun)input_key_callback);
     glfwSetCursorPosCallback(window, (GLFWcursorposfun)mouse_pos_callback);
     glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)mouse_callback);
+    glfwSetCharCallback(window, (GLFWcharfun)input_utf8_callback);
 }
 void input_update()
 {
@@ -226,8 +236,14 @@ bool get_last_key_state(key _key)
 }
 
 // window is type GLFWwindow*
-void key_callback(void* window, key _key, int scancode, input_state state, int mods)
+void input_key_callback(void* window, key _key, int scancode, input_state state, int mods)
 {
+    if (state == STATE_PRESS && get_last_key_state(_key) == STATE_RELEASED)
+    {
+      for (int i = 0; i < key_callbacks_len; ++i)
+      { key_callbacks[i](_key, state, mods); }
+    }
+    
     if (state == STATE_PRESS)
     {
         //mapping glfw keys to our keycodes
@@ -357,8 +373,26 @@ void key_callback(void* window, key _key, int scancode, input_state state, int m
         else if (_key == KEY_LeftWinMacSymbol) { LeftWinMacSymbol_st = true; LeftSuper_st = true; }
         else if (_key == KEY_RightWinMacSymbol) { RightWinMacSymbol_st = true; RightSuper_st = true; }
     }
+
 }
 
+void input_register_key_callback(key_callback func_ptr)
+{
+  ASSERT(key_callbacks_len < KEY_CALLBACK_MAX -1);
+  key_callbacks[key_callbacks_len++] = func_ptr;
+}
+
+void input_utf8_callback(void* window, int code)
+{
+  for (int i = 0; i < utf8_callbacks_len; ++i)
+  { utf8_callbacks[i](code); }
+}
+
+void input_register_utf8_callback(utf8_callback func_ptr)
+{
+  ASSERT(utf8_callbacks_len < UTF8_CALLBACK_MAX -1);
+  utf8_callbacks[utf8_callbacks_len++] = func_ptr;
+}
 
 input_state get_mouse_state(mouse_btn btn)
 {
@@ -439,8 +473,8 @@ void get_mouse_delta(f64* x, f64* y)
 void center_cursor_pos()
 {
     int w, h;
-    get_window_size(&w, &h);
-    glfwSetCursorPos(get_window(), (double)w / 2, (double)h / 2);
+    window_get_size(&w, &h);
+    glfwSetCursorPos(window_get(), (double)w / 2, (double)h / 2);
     mouse_x = (double)w / 2;
     mouse_y = (double)h / 2;
     mouse_delta_x = 0; mouse_delta_y = 0;
@@ -450,11 +484,11 @@ void set_cursor_visible(bool visible)
 {
     if (visible)
     {
-        glfwSetInputMode(get_window(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(window_get(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
     else
     {
-        glfwSetInputMode(get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(window_get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 }
 

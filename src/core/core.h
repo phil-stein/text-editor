@@ -8,6 +8,8 @@
 #include <math.h>
 #include <assert.h>
 
+// controls debug vs. release behaviour
+#define DEBUG
 
 // null
 #ifndef NULL
@@ -57,13 +59,16 @@ typedef void (empty_callback)(void);
 
 #define STR_VAR(v)  (#v)
 #define STR_BOOL(v) ((v) ? "true" : "false")
+#define SPRINTF(max, ...)  ASSERT(sprintf(__VA_ARGS__) < (max)) 
+
+#ifdef DEBUG
 
 #define PF(...)		  printf(__VA_ARGS__)
 
 #define P_INT(v) 	  PF("%s: %d\n", #v, v)
 #define P_F32(v) 	  PF("%s: %f\n", #v, v)
 #define P_STR(v) 	  PF("%s: \"%s\"\n", #v, v)
-#define P_CHAR(v) 	PF("%s: %c\n", #v, v)
+#define P_CHAR(v) 	PF("%s: %c\n", #v, (char)(v))
 #define P_BOOL(v) 	PF("%s: %s\n", #v, STR_BOOL(v))
 
 #define P(msg)		  PF("%s\n", msg)
@@ -72,9 +77,32 @@ typedef void (empty_callback)(void);
 
 #define P_ERR(msg)	PF("[ERROR] %s\n -> file: %s, line: %d\n", msg, __FILE__, __LINE__)
 #define P_ERRF(...)	PF("[ERROR] "); PF(__VA_ARGS__); PF(" -> file: %s, line: %d\n", __FILE__, __LINE__)
-#define ASSERT(c) if(!(c)) { P_ERR(#c); abort(); }
+#define ASSERT(c) if(!(c)) { PF("[ASSERT] '%s'\n -> file: %s, line: %d\n", #c, __FILE__, __LINE__); abort(); }
 #define ERR(msg)  P_ERR(msg); abort();
 #define ERRF(...)  P_ERRF(__VA_ARGS__); abort();
+#define ERR_CHECK(c, msg) if(!(c)) { ERR(msg); }
+#define ERR_CHECKF(c, ...) if(!(c)) { ERRF(__VA_ARGS__); }
+
+#elif
+
+#define PF(...)		  
+#define P_INT(v) 	  
+#define P_F32(v) 	  
+#define P_STR(v) 	  
+#define P_CHAR(v) 	
+#define P_BOOL(v) 	
+#define P(msg)		  
+#define P_IL(msg)	  
+#define P_TXT(txt)  
+#define P_ERR(msg)	
+#define P_ERRF(...)	
+#define ASSERT(c) 
+#define ERR(msg)  
+#define ERRF(...)  
+#define ERR_CHECK(c, msg) 
+#define ERR_CHECKF(c, ...) 
+
+#endif
 
 
 #endif

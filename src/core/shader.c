@@ -1,6 +1,6 @@
 #include "shader.h"
 #include <stdio.h>
-#include "../../external/GLAD/glad.h"
+#include <GLAD/glad.h>
 
 
 // generate a shader-program from a vertex- and fragment-shader
@@ -80,16 +80,15 @@ shader create_shader_from_file(const char* vert_path, const char* frag_path, con
 	u64 len;
 
 	f = fopen(vert_path, "rb");
-	if (f == NULL) {
-		fprintf(stderr, "error loading vert shader text-file at: %s\n", vert_path);
-		assert(false);
-	}
+	ERR_CHECKF(f != NULL, "loading vert shader text-file at: %s\n", vert_path);
+	
 
 	// get len of file
 	fseek(f, 0, SEEK_END);
 	len = ftell(f); 
 	assert(len > 0);
 	fseek(f, 0, SEEK_SET);
+  len++; // null-terminator
 
 	// alloc memory 
 	vert_src = calloc(1, len);
@@ -99,6 +98,7 @@ shader create_shader_from_file(const char* vert_path, const char* frag_path, con
 	fread(vert_src, sizeof(char), len, f);
 	assert(strlen(vert_src) > 0);
 	fclose(f);
+  vert_src[len -1] = '\0';
 
 	// --------------
 
@@ -118,6 +118,7 @@ shader create_shader_from_file(const char* vert_path, const char* frag_path, con
 	len = ftell(f);
 	assert(len > 0);
 	fseek(f, 0, SEEK_SET);
+  len++; // null-terminator
 
 	// alloc memory 
 	frag_src = calloc(1, len);
@@ -127,6 +128,7 @@ shader create_shader_from_file(const char* vert_path, const char* frag_path, con
 	fread(frag_src, sizeof(char), len, f);
 	assert(strlen(frag_src) > 0);
 	fclose(f);
+  frag_src[len -1] = '\0';
 
 	// --------------
 

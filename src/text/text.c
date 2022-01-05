@@ -1,15 +1,16 @@
 #include "text.h"
-#include "../core/window.h"
-#include "../math/math_inc.h"
+#include "text_codes.h"
+#include <core/window.h>
+#include <math/math_inc.h>
 
 #include <ctype.h>
 #include <wchar.h>  // tmp
 #include <locale.h> // tmp
 
 
-#include "../../external/FREETYPE/ft2build.h"
+#include <FREETYPE/ft2build.h>
 #include FT_FREETYPE_H
-#include "../../external/GLAD/glad.h"
+#include <GLAD/glad.h>
 
 FT_Library  library;
 FT_Face     face;
@@ -17,8 +18,10 @@ FT_Face     face;
 int glyph_h = 0;  // rough estimate not acutal size
 int glyph_w = 0;  // rough estimate not acutal size
 
+char cur_font_path[FONT_PATH_MAX];
+char cur_font_name[FONT_NAME_MAX];
+int  cur_font_size = 0;
 
-#define GLYPH_POOL_MAX 256
 glyph glyph_pool[GLYPH_POOL_MAX];
 int   glyph_pool_pos = 0;
 
@@ -29,6 +32,28 @@ INLINE glyph text_ft_bitmap_to_glyph(FT_Bitmap* b);
 
 void text_init(const char* font_path, int font_size)
 {
+  text_load_font(font_path, font_size);
+  
+    PF("-> FT inited\n"); 
+  PF("  -> font-name: %s\n",   cur_font_name);
+  PF("  -> font-size: %d\n",   cur_font_size);
+  PF("  -> font-glyphs: %d\n", (int)face->num_glyphs);
+  PF("  -> has color: %s\n",   STR_BOOL(FT_HAS_COLOR(face)));
+  PF("  -> is sfnt: %s\n",     STR_BOOL(FT_IS_SFNT(face)));
+  PF("  -> scalable: %s\n",    STR_BOOL(FT_IS_SCALABLE(face)));
+  PF("  -> has kerning: %s\n", STR_BOOL(FT_HAS_KERNING(face)));
+}
+
+void text_load_font(const char* font_path, int font_size)
+{
+  // -- cleanup --
+  FT_Done_Face(face);
+  FT_Done_FreeType(library);
+  face = NULL;
+  library = NULL;
+  glyph_pool_pos = 0; 
+
+  // ---- font ----
   int error = 0;
 
   error = FT_Init_FreeType( &library );
@@ -37,31 +62,58 @@ void text_init(const char* font_path, int font_size)
   error = FT_New_Face(library, font_path, 0, &face);
   FREETYPE_ERR_CHECK(error, "error during face init.");
   
+  float x, y;
+  window_get_monitor_dpi(&x, &y);
   int w, h;
-  get_window_size(&w, &h);
+  window_get_size(&w, &h);
   error = FT_Set_Char_Size(
       face,           // handle to face object           
       0,              // char_width in 1/64th of points, 0: same as height  
       font_size*64,   // char_height in 1/64th of points 
-      w,              // horizontal device resolution  (dpi)  
-      h );            // vertical device resolution    (dpi)
+      x,              // horizontal device resolution  (dpi)  
+      y );            // vertical device resolution    (dpi)
   FREETYPE_ERR_CHECK(error, "error during face sizing.");
 
-  glyph_w = font_size;  
-  glyph_h = font_size * 15; // 14
-  
-  P("FT inited no errors.");
+  glyph_w = font_size * 2;  
+  glyph_h = font_size * 4; // * 1.75f; // 14
+
+  strcpy(cur_font_path, font_path);
+  // get end of path / start of file name
+  int pos = 0;
+  for (int i = strlen(font_path) -1; i >= 0; --i)
+  {
+    if (font_path[i] == '\\' || font_path[i] == '/')
+    { pos = i +1; break; }
+  } 
+  int cpy = 0;
+  for (int i = pos; i < strlen(font_path) && i < FONT_NAME_MAX; ++i)
+  {
+    cur_font_name[cpy++] = font_path[i];
+  }
+  cur_font_size = font_size;
+}
+void text_set_font_size(int size)
+{
+  P_STR(cur_font_path);
+  text_load_font(cur_font_path, size);
+}
+
+
+void text_cleanup()
+{
+  FT_Done_Face(face);
+  FT_Done_FreeType(library);
 }
 
 INLINE glyph text_ft_bitmap_to_glyph(FT_Bitmap* b)
 {
   glyph g;
-  g.w = b->width;
-  g.h = b->rows;
+  // g.w = b->width;
+  // g.h = b->rows;
   
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glGenTextures(1, &g.handle);
-  glBindTexture(GL_TEXTURE_2D, g.handle);  
+  glGenTextures(1, &g.tex);
+  glBindTexture(GL_TEXTURE_2D, g.tex);  
   
   // no interpolation
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -69,7 +121,7 @@ INLINE glyph text_ft_bitmap_to_glyph(FT_Bitmap* b)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, g.w, g.h, 0, GL_RED, GL_UNSIGNED_BYTE, b->buffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, b->width, b->rows, 0, GL_RED, GL_UNSIGNED_BYTE, b->buffer);
 
   return g;
 }
@@ -79,48 +131,27 @@ glyph* text_make_glyph(int code)
   int error = 0;
   int glyph_index = FT_Get_Char_Index(face, code); // unicode, utf-32
   if (glyph_index == code) { ERR("no charmap found."); }
-
+  
   error = FT_Load_Glyph(
-      face,              // handle to face object 
+      face,               // handle to face object 
       glyph_index,        // glyph index           
-      FT_LOAD_DEFAULT );  // load flags
+      FT_LOAD_DEFAULT | FT_LOAD_COLOR );  // load flags
   FREETYPE_ERR_CHECK(error, "error loading glyph.");
-
+  
   if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
   {
     error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL); // aliased 256 gaylevels
     FREETYPE_ERR_CHECK(error, "error rendering glyph.");
   }
-  
+  // float x, y;
+  // get_monitor_dpi(&x, &y); 
   int w, h;
-  get_window_size(&w, &h);
-  // @UNSURE: y1 & y0 / by h 
-  const f32 y1 = (f32)(face->glyph->bitmap_top) / w;        // top
-  const f32 y0 = (f32)(y1 - face->glyph->bitmap.rows) / w;  // bottom, top - height
-  const f32 x0 = (f32)(face->glyph->bitmap_left) / h;       // left
-  const f32 x1 = (f32)(x0 + face->glyph->bitmap.width) / h; // right, left + width 
-  // const f32 y1 = (f32)(face->glyph->bitmap_top) / h;        // top
-  // const f32 y0 = (f32)(y1 - face->glyph->bitmap.rows) / h;  // bottom, top - height
-  // const f32 x0 = (f32)(face->glyph->bitmap_left) / w;       // left
-  // const f32 x1 = (f32)(x0 + face->glyph->bitmap.width) / w; // right, left + width 
-
-  ASSERT(y1 >= -1 && y1 <= 1);
-  ASSERT(y0 >= -1 && y0 <= 1);
-  ASSERT(x1 >= -1 && x1 <= 1);
-  ASSERT(x0 >= -1 && x0 <= 1);
-  P_F32(y1);
-  P_F32(y0);
-  P_F32(x1);
-  P_F32(x0);
-  // tmp
-  const f32 _y1 = (f32)(face->glyph->bitmap_top);        
-  const f32 _y0 = (f32)(y1 - face->glyph->bitmap.rows);  
-  const f32 _x0 = (f32)(face->glyph->bitmap_left);       
-  const f32 _x1 = (f32)(x0 + face->glyph->bitmap.width);
-  P_F32(_y1);
-  P_F32(_y0);
-  P_F32(_x1);
-  P_F32(_x0);
+  window_get_size(&w, &h);
+  f32 y1 = face->glyph->bitmap_top;        // top
+  f32 y0 = y1 - face->glyph->bitmap.rows;  // bottom, top - height
+  f32 x0 = face->glyph->bitmap_left;       // left
+  f32 x1 = x0 + face->glyph->bitmap.width; // right, left + width 
+  
   f32 verts[] = 
 	{ 
 	// positions   // tex coords
@@ -147,14 +178,14 @@ glyph* text_make_glyph(int code)
   ASSERT(glyph_pool_pos < GLYPH_POOL_MAX -1);
   glyph g = text_ft_bitmap_to_glyph(&face->glyph->bitmap);
   g.code    = code;
-  g.advance = face->glyph->advance.x / 64;
+  g.advance = face->glyph->advance.x / 32; // / 64; // @UNCLEAR: should be 64
   glyph_pool[glyph_pool_pos++] = g; 
   glyph_pool[glyph_pool_pos -1].vao = vao;
   
   return &glyph_pool[glyph_pool_pos -1];
 }
 
-glyph* text_get_char_glyph(int code)
+glyph* text_get_glyph(int code)
 {
   for (int i = 0; i < glyph_pool_pos; ++i)
   {
@@ -163,27 +194,15 @@ glyph* text_get_char_glyph(int code)
   return text_make_glyph(code);
 }
 
-glyph_info text_get_info(int code)
-{
-  // if (isspace(code) && code != ' ')
-  glyph* ptr = text_get_char_glyph(code);
-  glyph_info info;
-  info.code = ptr->code;
-  info.tex  = ptr->handle;
-  info.vao  = ptr->vao;
-  info.advance = ptr->advance;
-  static int count;
-  PF("%.3d | ", count++);
-  PF("[%.3d]", code);
-  setlocale(LC_CTYPE, "");
-  wprintf(L" '%lc'\n", (wchar_t)code);
-  return info;
-}
-
 void text_get_glyph_size_estim(int* w, int* h)
 {
   *w = glyph_w;
   *h = glyph_h;
 }
 
+const char* text_get_font(int* size)
+{
+  *size = cur_font_size;
+  return cur_font_name;
+}
 

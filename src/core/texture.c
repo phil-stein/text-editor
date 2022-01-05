@@ -3,9 +3,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #define STB_IMAGE_IMPLEMENTATION	// only define once
-#include "../../external/stb/stb_image.h"
+#include <stb/stb_image.h>
 #pragma GCC diagnostic pop
-#include "../../external/GLAD/glad.h"
+#include <GLAD/glad.h>
 
 void texture_load_pixels(const char* path, u8** pixels_out, size_t* width_out, size_t* height_out, int* channel_num, bool flip_vertical) 
 {
@@ -78,7 +78,7 @@ texture texture_create_from_path(const char* file_path, const char* name, bool f
     tex.name = (char*)name;
     tex.path = (char*)file_path;
 
-    printf("loaded texture: '%s' from '%s', handle: '%d'\n", name, file_path, handle);
+    // printf("loaded texture: '%s' from '%s', handle: '%d'\n", name, file_path, handle);
 
     return tex;
 }

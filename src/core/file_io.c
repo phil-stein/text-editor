@@ -30,6 +30,7 @@ char* read_text_file(const char* file_path)
     len = ftell(f);
     assert(len > 0);
     fseek(f, 0, SEEK_SET);
+    len++;   // for null-terminator
 
     // alloc memory 
     text = calloc(1, len * sizeof(char));
@@ -39,8 +40,7 @@ char* read_text_file(const char* file_path)
     fread(text, 1, len, f);
     assert(strlen(text) > 0);
     fclose(f);
-
-    printf("text: %s\n", text);
+    text[len -1] = '\0'; 
 
     return text;
 }
@@ -62,6 +62,7 @@ char* read_text_file_len(const char* file_path, int* length)
     len = ftell(f);
     assert(len > 0);
     fseek(f, 0, SEEK_SET);
+    len++;   // for null-terminator
 
     // alloc memory 
     text = calloc(1, len);
@@ -71,6 +72,7 @@ char* read_text_file_len(const char* file_path, int* length)
     fread(text, sizeof(char), len, f);
     assert(strlen(text) > 0);
     fclose(f);
+    text[len -1] = '\0'; 
 
     *length = len;
     return text;

@@ -3,12 +3,20 @@
 
 #include "core.h"
 #include "window.h"
-// #include "../../external/GLFW/glfw3.h"
 
 // "input_state" mapps directly to glfws key definitions
 typedef enum input_state { STATE_RELEASED, STATE_PRESS } input_state;
 // typedef enum keystate ;
 
+typedef enum modifier_flags
+{
+  MOD_SHIFT     = FLAG(0),  // 0b00001
+  MOD_CTRL      = FLAG(1),  // 0b00010  
+  MOD_ALT       = FLAG(2),  // 0b00100 
+  MOD_CAPSLOCK  = FLAG(3),  // 0b01000 
+  MOD_NUMLOCK   = FLAG(4)   // 0b10000 
+
+}mod_flags;
 
 enum key
 {
@@ -220,6 +228,9 @@ enum mouse_btn
 // "mouse_btn" mapps directly to glfws key definitions
 typedef enum mouse_btn mouse_btn;
 
+typedef void (*key_callback)(key key, input_state state, mod_flags mods);
+typedef void (*utf8_callback)(int code);
+
 void input_init();
 void input_update();
 
@@ -238,9 +249,13 @@ bool is_key_pressed(key _key);
 
 // sets the key states for the last frame
 // window is type GLFWwindow*
-void key_callback(void* window, key _key, int scancode, input_state state, int mods);
+void input_key_callback(void* window, key _key, int scancode, input_state state, int mods);
+void input_register_key_callback(key_callback func_ptr);
 
-// gets the state of the key last frame 
+void input_utf8_callback(void* window, int code);
+void input_register_utf8_callback(utf8_callback func_ptr);
+
+  // gets the state of the key last frame 
 bool get_last_key_state(key _key);
 
 

@@ -5,4 +5,11 @@ void main()
   print("hello, world!");
 }
 
-//  testing line-height: HtHyHgHeHä
+// testing line-height: ItIyIgIeIUIlIqI|
+
+// line wrap: uga buga uugaa buugaa uuugaaa buuugaaa uuuugaaaa buuuugaaaa
+
+// hello these are words so i can actually tell if the wrapping doesn't cut off characters
+
+:) 😀
+

@@ -1,8 +1,9 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include "../core/core.h"
-#include "../core/texture.h"
+#include <core/core.h>
+#include <core/texture.h>
+#include <math/math_inc.h>
 
 #define FT_ERR_STR(err)                                   \
     (err) == 0x00 ? "no error" :                          \
@@ -50,32 +51,30 @@
 
 // ---- types ----
 
-// @TODO: replace glyph with glyph_info
-
-typedef struct glyph
-{
-  u32 handle;
-  int w, h;     // width & height
-  int advance;
-  int code;     // utf-32 code
-  u32 vao;
-
-}glyph;
-
 // @TODO: make this u32[2]
 typedef struct glyph_render_info
 {
-  int code;
-  u32 tex;
-  u32 vao;
-  u32 advance;
-}glyph_info;
+  u32  code;
+  u32  advance;
+  u32  vao;
+  u32  tex;
+  rgbf tint;
+}glyph;
+
+#define FONT_PATH_MAX   256
+#define FONT_NAME_MAX   128
+#define GLYPH_POOL_MAX  256
+
 
 void text_init(const char* font_path, int font_size);
+void text_load_font(const char* font_path, int font_size);
+void text_set_font_size(int size);
+void text_cleanup();
+
 glyph* text_make_glyph(int code);
-glyph* text_get_char_glyph(int code);
-glyph_info text_get_info(int code);
+glyph* text_get_glyph(int code);
 
 void text_get_glyph_size_estim(int* w, int* h);
+const char* text_get_font(int* size);
 
 #endif

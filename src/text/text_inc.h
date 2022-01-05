@@ -4,5 +4,6 @@
 #include "text.h"
 #include "text_draw.h"
 #include "text_codes.h"
+#include "text_edit.h"
 
 #endif

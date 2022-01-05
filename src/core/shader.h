@@ -2,7 +2,7 @@
 #define SHADER_H
 
 #include "core.h"
-#include "../math/math_inc.h"
+#include <math/math_inc.h>
 
 typedef struct shader
 {
