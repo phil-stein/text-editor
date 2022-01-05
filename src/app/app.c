@@ -106,7 +106,8 @@ void app_update()
     text_draw_glyph_box(VEC2_XY(pos[0], -h * 2 + g_h), 
       g_full/*&cmd[cmd_len -1]*/, RGB_F(0.3f, 0.3f, 0.35f)); 
   }
-  text_draw_line(VEC2_XY(0, -h * 2 + g_h), cmd, cmd_len == 1 ? 0 : cmd_len);
+  // text_draw_line(VEC2_XY(0, -h * 2 + g_h), cmd, cmd_len == 1 ? 0 : cmd_len);
+  text_draw_line(VEC2_XY(0, -h * 2 + g_h), cmd, cmd_len);
    
   if (is_key_pressed(KEY_Tab))
 	{
