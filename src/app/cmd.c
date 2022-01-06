@@ -5,7 +5,7 @@
 
 #include <ctype.h>
 
-void cmd_parse(glyph* codes[], int codes_len)
+void cmd_parse(int codes[], int codes_len)
 {
   cmd_token_block block;
   int block_len = 0;
@@ -13,7 +13,7 @@ void cmd_parse(glyph* codes[], int codes_len)
   cmd_interpret(block, block_len);
 }
 
-void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* block_len)
+void cmd_tokenize(int codes[], int codes_len, cmd_token_block block, int* block_len)
 {
   *block_len = 0;
   cmd_token t;
@@ -21,13 +21,13 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
   // start at 1 because '>'
   for (int i = 1; i < codes_len; ++i)
   {
-    if (isspace(codes[i]->code)) { continue; }
+    if (isspace(codes[i])) { continue; }
 
-    if (codes[i +0]->code == 'p' &&
-        codes[i +1]->code == 'r' &&
-        codes[i +2]->code == 'i' &&
-        codes[i +3]->code == 'n' &&
-        codes[i +4]->code == 't' )
+    if (codes[i +0] == 'p' &&
+        codes[i +1] == 'r' &&
+        codes[i +2] == 'i' &&
+        codes[i +3] == 'n' &&
+        codes[i +4] == 't' )
     {
       t.type = TOK_PRINT;
       block[*block_len] = t;
@@ -35,10 +35,10 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       i += 4;
       continue;
     }
-    if (codes[i +0]->code == 'f' &&
-        codes[i +1]->code == 'o' &&
-        codes[i +2]->code == 'n' &&
-        codes[i +3]->code == 't' )
+    if (codes[i +0] == 'f' &&
+        codes[i +1] == 'o' &&
+        codes[i +2] == 'n' &&
+        codes[i +3] == 't' )
     {
       t.type = TOK_FONT;
       block[*block_len] = t;
@@ -47,10 +47,10 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       // PF("added font, next: '%c'\n", codes[i +1].code);
       continue;
     }
-    if (codes[i +0]->code == 's' &&
-        codes[i +1]->code == 'i' &&
-        codes[i +2]->code == 'z' &&
-        codes[i +3]->code == 'e' )
+    if (codes[i +0] == 's' &&
+        codes[i +1] == 'i' &&
+        codes[i +2] == 'z' &&
+        codes[i +3] == 'e' )
     {
       t.type = TOK_SIZE;
       block[*block_len] = t;
@@ -59,10 +59,10 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       // PF("added size, next: '%c'\n", codes[i +1].code);
       continue;
     }
-    if (codes[i +0]->code == 'o' &&
-        codes[i +1]->code == 'p' &&
-        codes[i +2]->code == 'e' &&
-        codes[i +3]->code == 'n' )
+    if (codes[i +0] == 'o' &&
+        codes[i +1] == 'p' &&
+        codes[i +2] == 'e' &&
+        codes[i +3] == 'n' )
     {
       t.type = TOK_OPEN;
       block[*block_len] = t;
@@ -70,9 +70,9 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       i += 3;
       continue;
     }
-    if (codes[i +0]->code == 'c' &&
-        codes[i +1]->code == 'w' &&
-        codes[i +2]->code == 'd' )
+    if (codes[i +0] == 'c' &&
+        codes[i +1] == 'w' &&
+        codes[i +2] == 'd' )
     {
       t.type = TOK_CWD;
       block[*block_len] = t;
@@ -80,9 +80,9 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       i += 2;
       continue;
     }
-    if (codes[i +0]->code == 'n' &&
-        codes[i +1]->code == 'e' &&
-        codes[i +2]->code == 'w' )
+    if (codes[i +0] == 'n' &&
+        codes[i +1] == 'e' &&
+        codes[i +2] == 'w' )
     {
       t.type = TOK_NEW;
       block[*block_len] = t;
@@ -90,10 +90,10 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       i += 2;
       continue;
     }
-    if (codes[i +0]->code == 's' &&
-        codes[i +1]->code == 'a' &&
-        codes[i +2]->code == 'v' &&
-        codes[i +3]->code == 'e' )
+    if (codes[i +0] == 's' &&
+        codes[i +1] == 'a' &&
+        codes[i +2] == 'v' &&
+        codes[i +3] == 'e' )
     {
       t.type = TOK_SAVE;
       block[*block_len] = t;
@@ -104,9 +104,9 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
 
     // -- number --
     int str_pos = 0;
-    while (isdigit(codes[i]->code))
+    while (isdigit(codes[i]))
     {
-      t.str[str_pos++] = (char)codes[i]->code;
+      t.str[str_pos++] = (char)codes[i];
       i++;
       if (str_pos >= CMD_TOKEN_MAX) { break; }
     }
@@ -121,15 +121,15 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
 
     // -- string --
     str_pos = 0;
-    if (isalpha(codes[i]->code) ||
-        codes[i]->code == '/'   || codes[i]->code == '\\')
+    if (isalpha(codes[i]) ||
+        codes[i] == '/'   || codes[i]  == '\\')
     {
-      while ((isalnum(codes[i]->code) || 
-              codes[i]->code == ' '   || codes[i]->code == '_'  || 
-              codes[i]->code == '/'   || codes[i]->code == '\\' || 
-              codes[i]->code == '.'   || codes[i]->code == ','))
+      while ((isalnum(codes[i]) || 
+              codes[i] == ' '   || codes[i]  == '_'  || 
+              codes[i] == '/'   || codes[i]  == '\\' || 
+              codes[i] == '.'   || codes[i]  == ','))
       {
-        t.str[str_pos++] = (char)codes[i]->code;
+        t.str[str_pos++] = (char)codes[i];
         i++;
         if (str_pos >= CMD_TOKEN_MAX || i >= codes_len)
         { P("- br -");break; }

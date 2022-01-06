@@ -19,8 +19,8 @@ bool wiref_act = false;
 char cwd[CWD_MAX];
 
 #define BUFFER_MAX 512
-glyph* buffer[BUFFER_MAX];
-u32    buffer_pos = 0;
+int buffer[BUFFER_MAX];
+int buffer_pos = 0;
 
 int cursor = 0;    // index into 'buffer'
 rgbf cursor_col = { 0.4f, 0.4f, 0.5f };
@@ -30,16 +30,16 @@ int scroll = 0;    // y lines to offset
 #define CMD_KEY   '>'
 #define CMD_START     0x25B6 // 0x25BA // 0x25B8 // '>'/  / 0x2192 
 #define CMD_MAX   128
-glyph* cmd[CMD_MAX];
-int    cmd_len = 0;
-bool   in_cmd = false;
-int    cmd_cursor = 0;
-#define CMD_PSH(c)   if (cmd_len < CMD_MAX) { cmd[cmd_len++] = text_get_glyph(c, font_cmd);  }
+int  cmd[CMD_MAX];
+int  cmd_len = 0;
+bool in_cmd = false;
+int  cmd_cursor = 0;
+#define CMD_PSH(c)   if (cmd_len < CMD_MAX) { cmd[cmd_len++] = c;  }
 #define CMD_POP()    cmd_len = cmd_len -1 >= 1 ? cmd_len -1 : 1 
 #define CMD_INS(p, c)   if (p < CMD_MAX )                                     \
                         { for (int i = p; i < cmd_len && i < CMD_MAX -1; ++i) \
                           { cmd[i +1] = cmd[i]; }                             \
-                          cmd[p]->code = (c); cmd_len++; } else {P("over");}
+                          cmd[p] = (c); cmd_len++; }
 #define CMD_DEL(p)      if (p < CMD_MAX )                      \
                         { for (int i = p; i < cmd_len; i++)    \
                           { cmd[i] = cmd[i +1]; }              \
@@ -50,20 +50,20 @@ int    cmd_cursor = 0;
 #define CMD_CURSOR_R()  cmd_cursor = MIN(cmd_len, cmd_cursor +1) ; P_INT(cmd_cursor) 
 
 #define OUT_MAX 64
-glyph* out[OUT_MAX];
-int    out_pos = 0;
-float  out_t = 0.0f;
+int   out[OUT_MAX];
+int   out_pos = 0;
+float out_t = 0.0f;
 #define OUT_T_DEFAULT      2.0f
 #define OUT_FILL_T(str, t) for (out_pos = 0; out_pos < strlen(str) && out_pos < OUT_MAX; ++out_pos)  \
-                              { out[out_pos] = text_get_glyph(str[out_pos], font_out); } out_t = t
+                              { out[out_pos] = str[out_pos]; } out_t = t
 #define OUT_FILL(str)      OUT_FILL_T(str, OUT_T_DEFAULT)
 #define OUT_FLUSH()        out_pos = 0
 
 #define STATUS_MAX 64
-glyph* status[STATUS_MAX];
-int    status_pos = 0;
+int status[STATUS_MAX];
+int status_pos = 0;
 #define STATUS_FILL(str)   for (status_pos = 0; status_pos < strlen(str) && status_pos < STATUS_MAX; ++status_pos)  \
-                              { status[status_pos] = text_get_glyph(str[status_pos], font_status); }
+                           { status[status_pos] = str[status_pos]; }
 #define STATUS_FLUSH()     status_pos = 0
 
 #define OPEN_PATH_MAX 128
@@ -172,15 +172,15 @@ void app_update(float dt)
   int scroll_y = scroll * g_h;
 
   int lines = text_block_lines(buffer, buffer_pos);
-  glyph* line_buf[3];
+  int line_buf[3];
   int i = 0; while (i <= lines)
   {
     int h = i % 1000 * 0.01f;
     int t = i % 100  * 0.1f;
     int o = i % 10   * 1.0f;
-    line_buf[0] = text_get_glyph(h + U_0 == U_0 ? U_MIDDLE_DOT : h +U_0, font_line_nr);   // houndreds place
-    line_buf[1] = text_get_glyph(t + U_0 == U_0 ? U_MIDDLE_DOT : t +U_0, font_line_nr);   // tens place
-    line_buf[2] = text_get_glyph(o +U_0, font_line_nr);                                   // ones place
+    line_buf[0] = h + U_0 == U_0 ? U_MIDDLE_DOT : h +U_0;   // houndreds place
+    line_buf[1] = t + U_0 == U_0 ? U_MIDDLE_DOT : t +U_0;   // tens place
+    line_buf[2] = o +U_0;                                   // ones place
     // use font_s chars and font_m spacing
     text_draw_line_col(VEC2_XY(0, -scroll_y -((g_h * i) + g_h)), line_buf, 3, line_num_col, font_line_nr); 
     i++; 
@@ -256,13 +256,17 @@ void app_load_file(const char* path, font_t* font)
   char* txt = read_text_file_len(path, &txt_len);
   for (int i = 0; i < txt_len; ++i)
   { 
-    if (txt[i] == ' ')  
-    { buffer[buffer_pos++] = text_get_glyph(U_SPACE, font); }
-    if (txt[i] == '\n') 
-    { buffer[buffer_pos++] = text_get_glyph(U_CR, font); }
-    if (isspace(txt[i]))
+    if (txt[i] == U_TAB)
+    { 
+      for (int i = 0; i < TAB_SPACES; ++i) 
+      { buffer[buffer_pos++] = U_SPACE; }
+      continue;
+    }
+    if (isspace(txt[i])   && 
+        txt[i] != U_SPACE &&
+        txt[i] != U_CR)
     { continue; }
-    buffer[buffer_pos++] = text_get_glyph(txt[i], font); 
+    buffer[buffer_pos++] = txt[i]; 
   }
   free(txt);
   char name[32];
@@ -278,11 +282,11 @@ void app_save_open_file()
   char ascii[BUFFER_MAX];
   for (int i = 0; i < buffer_pos; ++i)
   {
-    if (buffer[i]->code > 127) { continue; }
-    ascii[i] = buffer[i]->code == U_CR    ? '\n' : 
-               buffer[i]->code == U_EOF   ? '\0' :
-               buffer[i]->code == U_SPACE ? ' '  :
-               buffer[i]->code; 
+    if (buffer[i] > 127) { continue; }
+    ascii[i] = buffer[i] == U_CR    ? '\n' : 
+               buffer[i] == U_EOF   ? '\0' :
+               buffer[i] == U_SPACE ? ' '  :
+               buffer[i]; 
   }
   ascii[buffer_pos +1] = '\0'; // @TODO: do this better
   write_text_file(open_path, ascii, buffer_pos);
@@ -293,11 +297,11 @@ void app_save_open_file_as(const char* path)
   char ascii[BUFFER_MAX];
   for (int i = 0; i < buffer_pos; ++i)
   {
-    if (buffer[i]->code > 127) { continue; }
-    ascii[i] = buffer[i]->code == U_CR    ? '\n' : 
-               buffer[i]->code == U_EOF   ? '\0' :
-               buffer[i]->code == U_SPACE ? ' '  :
-               buffer[i]->code; 
+    if (buffer[i] > 127) { continue; }
+    ascii[i] = buffer[i] == U_CR    ? '\n' : 
+               buffer[i] == U_EOF   ? '\0' :
+               buffer[i] == U_SPACE ? ' '  :
+               buffer[i]; 
   }
   ascii[buffer_pos +1] = '\0'; // @TODO: do this better
   write_text_file(path, ascii, buffer_pos);
@@ -316,7 +320,7 @@ void app_utf8_callback(int code)
   else if (in_cmd)      { CMD_PSH(code); CMD_CURSOR_R(); }
   else
   { 
-    text_insert_char(buffer, (int*)&buffer_pos, BUFFER_MAX, cursor, code, font_main); 
+    text_insert_char(buffer, &buffer_pos, BUFFER_MAX, cursor, code); 
     cursor_right();
   } 
 
@@ -362,7 +366,7 @@ void app_key_callback(key _key, input_state state, mod_flags mods)
 
     if (_key == KEY_Enter)
     { 
-      text_insert_char(buffer, (int*)&buffer_pos, BUFFER_MAX, cursor, U_CR, font_main); 
+      text_insert_char(buffer, &buffer_pos, BUFFER_MAX, cursor, U_CR); 
       cursor++;
     }
     if (_key == KEY_Backspace)
@@ -374,7 +378,7 @@ void app_key_callback(key _key, input_state state, mod_flags mods)
     {
       for (int i = 0; i < TAB_SPACES; ++i)
       { 
-        text_insert_char(buffer, (int*)&buffer_pos, BUFFER_MAX, cursor, U_SPACE, font_main); 
+        text_insert_char(buffer, &buffer_pos, BUFFER_MAX, cursor, U_SPACE); 
         cursor_right();
       } 
     }
@@ -387,8 +391,8 @@ INLINE void cursor_left()
 }
 INLINE void cursor_right()
 {
-  if (buffer[cursor]->code == U_CR  || 
-      buffer[cursor]->code == U_EOF ||
+  if (buffer[cursor] == U_CR  || 
+      buffer[cursor] == U_EOF ||
       cursor +1 >= BUFFER_MAX)
   { return; }
   cursor++;
@@ -397,37 +401,37 @@ INLINE void cursor_up()
 {
   int l_space = 0;
   while (cursor > 0                       &&
-         buffer[cursor -1]->code != U_CR  &&
-         buffer[cursor -1]->code != U_EOF )
+         buffer[cursor -1] != U_CR  &&
+         buffer[cursor -1] != U_EOF )
   { cursor--; l_space++; }
   cursor -= cursor <= 0 ? 0 : 2;
   // cursor -= 2;
   while (cursor > 0                    && 
-         buffer[cursor]->code != U_CR  &&
-         buffer[cursor]->code != U_EOF )
+         buffer[cursor] != U_CR  &&
+         buffer[cursor] != U_EOF )
   { cursor--; }
   cursor += cursor <= 0 ? 0 : 1;
   while (l_space > 0                  &&
-         buffer[cursor]->code != U_CR && 
-         buffer[cursor]->code != U_EOF )
+         buffer[cursor] != U_CR && 
+         buffer[cursor] != U_EOF )
   { cursor++; l_space--; }
 }
 INLINE void cursor_down()
 {
   int l_space = 0;
   while (cursor > 0                       &&
-         buffer[cursor -1]->code != U_CR  &&
-         buffer[cursor -1]->code != U_EOF )
+         buffer[cursor -1] != U_CR  &&
+         buffer[cursor -1] != U_EOF )
   { cursor--; l_space++; }
   cursor++;
-  while (buffer[cursor]->code != U_CR  &&
-         buffer[cursor]->code != U_EOF && 
+  while (buffer[cursor] != U_CR  &&
+         buffer[cursor] != U_EOF && 
          cursor < buffer_pos -1)
   { cursor++; }
   cursor++;
   while (l_space > 0                  &&
-         buffer[cursor]->code != U_CR && 
-         buffer[cursor]->code != U_EOF )
+         buffer[cursor] != U_CR && 
+         buffer[cursor] != U_EOF )
   { cursor++; l_space--; }
 }
 
@@ -435,13 +439,13 @@ INLINE int cursor_line()
 {
   int lne = 0;
   for (int i = 0; i < cursor; ++i)
-  { lne = buffer[i]->code == U_CR ? lne +1 : lne; }
+  { lne = buffer[i] == U_CR ? lne +1 : lne; }
   return lne;
 }
 INLINE int cursor_column()
 {
   int col = 0;
-  while (buffer[col +1]->code != U_CR) { col++; }
+  while (buffer[col +1] != U_CR) { col++; }
   return col;
 }
 

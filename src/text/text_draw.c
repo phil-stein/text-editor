@@ -179,7 +179,7 @@ void text_draw_quad(vec2 pos, vec2 size, rgbf color)
 
 // ---- bulk draw ----
 
-void text_draw_line_col(vec2 pos, glyph** g, int g_len, rgbf color, font_t* font)
+void text_draw_line_col(vec2 pos, int* g, int g_len, rgbf color, font_t* font)
 {
   window_get_size(&w, &h);
   int g_w = font->gw;
@@ -187,18 +187,19 @@ void text_draw_line_col(vec2 pos, glyph** g, int g_len, rgbf color, font_t* font
 
   for(int i = 0; i < g_len; ++i)
   {
+    glyph* _g = text_get_glyph(g[i], font);
     // just for debug
     if(pos[0] + (g_w*2) >= w * 2)
     { pos[1] -= g_h; pos[0] = 0; }
      
     if (glyph_box_act)
-    { text_draw_glyph_box(pos, g[i], VEC3_XYZ(1, 0, 1)); }
+    { text_draw_glyph_box(pos, _g, VEC3_XYZ(1, 0, 1)); }
      
-    text_draw_glyph_col(pos, g[i], color); 
-    pos[0] += g[i]->advance;
+    text_draw_glyph_col(pos, _g, color); 
+    pos[0] += _g->advance;
   }
 }
-void text_line_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
+void text_line_pos(int _g, vec2 pos, int* g, int g_len, font_t* font)
 {
   window_get_size(&w, &h);
   int g_w = font->gw;
@@ -211,7 +212,7 @@ void text_line_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
     { pos[1] -= g_h; pos[0] = 0; }
      
     if (i == _g) { break; }
-    pos[0] += g[i]->advance;
+    pos[0] += text_get_glyph(g[i], font)->advance;
   }
 }
 
@@ -228,6 +229,8 @@ void text_draw_block(vec2 pos, int* g, int g_len, font_t* font)
   // vec2 size = VEC2_INIT(0.001f);
   for(int i = 0; i < g_len; ++i)
   {
+    glyph* _g = text_get_glyph(g[i], font);
+    
     if(g[i] == U_EOF || g[i] == U_NULL)
     { break; }
 
@@ -241,13 +244,13 @@ void text_draw_block(vec2 pos, int* g, int g_len, font_t* font)
     { pos[1] -= g_h; pos[0] = x; }
     
     if (glyph_box_act)
-    { text_draw_glyph_box(pos, g[i], VEC3_XYZ(1, 0, 1)); }
+    { text_draw_glyph_box(pos, _g, VEC3_XYZ(1, 0, 1)); }
     
-    text_draw_glyph(pos, g[i]); 
-    pos[0] += g[i]->advance;
+    text_draw_glyph(pos, _g); 
+    pos[0] += _g->advance;
   }
 }
-void text_block_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
+void text_block_pos(int _g, vec2 pos, int* g, int g_len, font_t* font)
 {
   // @TODO:
   window_get_size(&w, &h);
@@ -258,7 +261,7 @@ void text_block_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
   // vec2 size = VEC2_INIT(0.001f);
   for(int i = 0; i < g_len; ++i)
   {
-    if(g[i]->code == U_EOF || g[i]->code == U_NULL)
+    if(g[i] == U_EOF || g[i] == U_NULL)
     { break; }
     
     if(pos[0] + (g_w*2) >= w * 2)
@@ -266,9 +269,9 @@ void text_block_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
     
     if (i == _g) { break; }
     
-    pos[0] += g[i]->advance;
+    pos[0] += text_get_glyph(g[i], font)->advance;
     
-    if(g[i]->code == U_CR)  // 0x0D: '\n', carriage return
+    if(g[i] == U_CR)  // 0x0D: '\n', carriage return
     { pos[1] -= g_h; pos[0] = 0; }
   }
 }

@@ -17,8 +17,8 @@ typedef struct cmd_token
 typedef cmd_token cmd_token_block[CMD_TOKEN_BLOCK_MAX];
 
 
-void cmd_parse(glyph* codes[], int codes_len);
-void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* block_len);
+void cmd_parse(int codes[], int codes_len);
+void cmd_tokenize(int codes[], int codes_len, cmd_token_block block, int* block_len);
 void cmd_interpret(cmd_token_block block, int block_len);
 
 #endif
