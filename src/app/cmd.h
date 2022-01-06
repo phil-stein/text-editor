@@ -4,7 +4,7 @@
 #include <text/text_inc.h>
 
 
-typedef enum cmd_token_type { TOK_NUM, TOK_STR, TOK_PRINT, TOK_FONT, TOK_SIZE, TOK_OPEN, TOK_CWD, TOK_NEW } cmd_token_type;
+typedef enum cmd_token_type { TOK_NUM, TOK_STR, TOK_PRINT, TOK_FONT, TOK_SIZE, TOK_OPEN, TOK_CWD, TOK_NEW, TOK_SAVE } cmd_token_type;
 
 #define CMD_TOKEN_MAX 32
 typedef struct cmd_token

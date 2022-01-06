@@ -1,5 +1,4 @@
 #include "text_draw.h"
-#include "text_codes.h"
 #include <core/window.h>
 #include <core/shader.h>
 #include <core/input.h>
@@ -22,20 +21,9 @@ u32 img_vao;
 
 static glyph* g_full = NULL;
 
-void text_draw_init()
+void text_draw_init(font_t* font)
 {
 	// ---- quad -----
-	// f32 quad_verts_original[] = 
-	// { 
-	// // positions   // tex coords
-	//  0.0f,  1.0f,  0.0f, 1.0f,
-	//  0.0f,  0.0f,  0.0f, 0.0f,
-	//  1.0f,  0.0f,  1.0f, 0.0f,
-
-	//  1.0f,  0.0f,  1.0f, 0.0f,
-	//  1.0f,  1.0f,  1.0f, 1.0f,
-	//  0.0f,  1.0f,  0.0f, 1.0f,
-	// };
 	f32 quad_verts[] = 
 	{ 
 	// positions   // tex coords
@@ -70,7 +58,7 @@ void text_draw_init()
   blank_tex = texture_create_from_path("assets/textures/blank.png",
 					    "blank", true).handle; 
   
-  g_full = text_get_glyph(9608);
+  g_full = text_get_glyph(U_FULL, font);
  
 }
 
@@ -82,9 +70,9 @@ void text_draw_update()
 
 // ---- single draw ----
 
-void text_draw_glyph(vec2 pos, glyph* g)
+void text_draw_glyph_col(vec2 pos, glyph* g, rgbf color)
 {
-window_get_size(&w, &h);
+  window_get_size(&w, &h);
 	   
   // ---- shader & draw call -----	  
   vec2 _pos;
@@ -103,7 +91,7 @@ window_get_size(&w, &h);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, g->tex); 
 	shader_set_int(&text_shader, "tex", 0);
-  shader_set_vec3(&text_shader, "tint", VEC3(1));
+  shader_set_vec3(&text_shader, "tint", color);
   shader_set_vec2(&text_shader, "pos", _pos);
   shader_set_vec2(&text_shader, "size", _size);
 		
@@ -191,12 +179,12 @@ void text_draw_quad(vec2 pos, vec2 size, rgbf color)
 
 // ---- bulk draw ----
 
-void text_draw_line(vec2 pos, glyph** g, int g_len)
+void text_draw_line_col(vec2 pos, glyph** g, int g_len, rgbf color, font_t* font)
 {
   window_get_size(&w, &h);
-  int g_w, g_h;
-  text_get_glyph_size_estim(&g_w, &g_h);
- 
+  int g_w = font->gw;
+  int g_h = font->gh;
+
   for(int i = 0; i < g_len; ++i)
   {
     // just for debug
@@ -206,15 +194,16 @@ void text_draw_line(vec2 pos, glyph** g, int g_len)
     if (glyph_box_act)
     { text_draw_glyph_box(pos, g[i], VEC3_XYZ(1, 0, 1)); }
      
-    text_draw_glyph(pos, g[i]); 
+    text_draw_glyph_col(pos, g[i], color); 
     pos[0] += g[i]->advance;
   }
 }
-void text_line_pos(int _g, vec2 pos, glyph** g, int g_len)
+void text_line_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
 {
   window_get_size(&w, &h);
-  int g_w, g_h;
-  text_get_glyph_size_estim(&g_w, &g_h);
+  int g_w = font->gw;
+  int g_h = font->gh;
+
   for(int i = 0; i < g_len; ++i)
   {
     // just for debug
@@ -227,27 +216,29 @@ void text_line_pos(int _g, vec2 pos, glyph** g, int g_len)
 }
 
 
-void text_draw_screen(glyph** g, int g_len)
+void text_draw_block(vec2 pos, int* g, int g_len, font_t* font)
 {
   window_get_size(&w, &h);
-  int g_w, g_h;
-  text_get_glyph_size_estim(&g_w, &g_h);
- 
-  vec2 pos  = VEC2_Y_INIT(-g_h); // window bar on top
+  int g_w = font->gw;
+  int g_h = font->gh;
+
+  vec2_add(pos, VEC2_Y(-g_h), pos); // window bar on top
+  float x = pos[0];
+
   // vec2 size = VEC2_INIT(0.001f);
   for(int i = 0; i < g_len; ++i)
   {
-    if(g[i]->code == U_EOF || g[i]->code == U_NULL)
+    if(g[i] == U_EOF || g[i] == U_NULL)
     { break; }
 
-    if(g[i]->code == U_CR)  // 0x0D: '\n', carriage return
+    if(g[i] == U_CR)  // 0x0D: '\n', carriage return
     { 
       // text_draw_glyph_box(pos, g_full, RGB_F(0, 1, 1));
-      pos[1] -= g_h; pos[0] = 0; continue; 
+      pos[1] -= g_h; pos[0] = x; continue; 
     }
     
     if(pos[0] + (g_w*2) >= w * 2)
-    { pos[1] -= g_h; pos[0] = 0; }
+    { pos[1] -= g_h; pos[0] = x; }
     
     if (glyph_box_act)
     { text_draw_glyph_box(pos, g[i], VEC3_XYZ(1, 0, 1)); }
@@ -256,13 +247,13 @@ void text_draw_screen(glyph** g, int g_len)
     pos[0] += g[i]->advance;
   }
 }
-void text_screen_pos(int _g, vec2 pos, glyph** g, int g_len)
+void text_block_pos(int _g, vec2 pos, glyph** g, int g_len, font_t* font)
 {
   // @TODO:
   window_get_size(&w, &h);
-  int g_w, g_h;
-  text_get_glyph_size_estim(&g_w, &g_h);
- 
+  int g_w = font->gw;
+  int g_h = font->gh;
+
   vec2_copy(VEC2_Y(-g_h), pos); // window bar on top
   // vec2 size = VEC2_INIT(0.001f);
   for(int i = 0; i < g_len; ++i)
@@ -281,4 +272,5 @@ void text_screen_pos(int _g, vec2 pos, glyph** g, int g_len)
     { pos[1] -= g_h; pos[0] = 0; }
   }
 }
+
 

@@ -20,7 +20,6 @@ OBJ_DIR = bin
 _OBJS =					\
 	glad.o				\
 	window.o			\
-	renderer.o		\
 	file_io.o			\
 	shader.o			\
 	input.o				\

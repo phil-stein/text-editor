@@ -5,6 +5,9 @@
 #include <core/texture.h>
 #include <math/math_inc.h>
 
+#include <FREETYPE/ft2build.h>
+#include FT_FREETYPE_H
+
 #define FT_ERR_STR(err)                                   \
     (err) == 0x00 ? "no error" :                          \
     (err) == 0x01 ? "cannot open resource" :              \
@@ -61,20 +64,34 @@ typedef struct glyph_render_info
   rgbf tint;
 }glyph;
 
+#define FONT_POOL_MAX 512
+typedef struct
+{
+  FT_Face face;   // freetype font info
+  int size;       // current size
+  int gw, gh;     // glyph width / height
+
+  glyph pool[FONT_POOL_MAX];
+  int pool_pos;
+
+}font_t;
+
+#define FONT_INIT()   { .face = NULL, .size = 0, .gw = 0, .gh = 0, .pool_pos = 0, }  
+
+
 #define FONT_PATH_MAX   256
 #define FONT_NAME_MAX   128
 #define GLYPH_POOL_MAX  256
 
 
-void text_init(const char* font_path, int font_size);
-void text_load_font(const char* font_path, int font_size);
-void text_set_font_size(int size);
+void text_load_font(const char* font_path, int font_size, font_t* font);
+void text_set_font_size(int size, font_t* font);
 void text_cleanup();
+void text_free_font(font_t* font);
 
-glyph* text_make_glyph(int code);
-glyph* text_get_glyph(int code);
+glyph* text_make_glyph(int code, font_t* font);
+glyph* text_get_glyph(int code, font_t* font);
 
-void text_get_glyph_size_estim(int* w, int* h);
 const char* text_get_font(int* size);
 
 #endif

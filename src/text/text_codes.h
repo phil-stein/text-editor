@@ -94,4 +94,10 @@
 
 // ..
 
+#define U_MIDDLE_DOT 0xB7
+
+// ...
+
+#define U_FULL       0x2588
+
 #endif

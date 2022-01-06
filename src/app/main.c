@@ -44,14 +44,6 @@ int main(void)
   glDisable(GL_DEPTH_TEST);
 
   // ---- init ----
-  text_init(
-"assets/fonts/\
-JetBrains Mono NL Regular \
-Nerd Font Complete Mono Windows Compatible.ttf", 
-      11);
-  // P("-> text_init() finished");
-  text_draw_init();
-  // P("-> text_draw_init() finished");
 	// renderer_init();
   // P("-> renderer_init() finished");
 	input_init();
@@ -77,7 +69,7 @@ Nerd Font Complete Mono Windows Compatible.ttf",
     glClear(GL_COLOR_BUFFER_BIT);
 
     // renderer_update();
-		app_update();
+		app_update(delta_t);
     text_draw_update();
 		input_update();
 

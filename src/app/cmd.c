@@ -90,6 +90,17 @@ void cmd_tokenize(glyph* codes[], int codes_len, cmd_token_block block, int* blo
       i += 2;
       continue;
     }
+    if (codes[i +0]->code == 's' &&
+        codes[i +1]->code == 'a' &&
+        codes[i +2]->code == 'v' &&
+        codes[i +3]->code == 'e' )
+    {
+      t.type = TOK_SAVE;
+      block[*block_len] = t;
+      *block_len += 1;
+      i += 3;
+      continue;
+    }
 
     // -- number --
     int str_pos = 0;
@@ -149,6 +160,8 @@ void cmd_interpret(cmd_token_block block, int block_len)
     { P("-- CWD --"); continue; }
     if (block[i].type == TOK_NEW)
     { P("-- NEW --"); continue; }
+    if (block[i].type == TOK_SAVE)
+    { P("-- SAVE --"); continue; }
     if (block[i].type == TOK_NUM)
     {
       int num = strtol(block[i].str, NULL, 10);
@@ -173,7 +186,7 @@ void cmd_interpret(cmd_token_block block, int block_len)
       int n = strtol(block[i +2].str, NULL, 10);
       P_INT(n);
       P("-- post --");
-      text_set_font_size(n);
+      // text_set_font_size(n);
       continue;
     }
     if (block[i +0].type == TOK_PRINT)
@@ -219,21 +232,35 @@ void cmd_interpret(cmd_token_block block, int block_len)
     if (block[i +0].type == TOK_OPEN)
     {
         if (block[i +1].type == TOK_NEW)
-        { app_new_file(); }
-        if (block[i +1].type == TOK_STR)
-        { app_load_file(block[i +1].str); }
+        { app_new_file(); continue; }
+        // if (block[i +1].type == TOK_STR)
+        // { app_load_file(block[i +1].str); continue; }
+    }
+    if (block[i +0].type == TOK_SAVE)
+    {
+      if (block[i +1].type == TOK_STR)
+      {
+        app_save_open_file_as(block[i +1].str);
+        continue;
+      }
+      app_save_open_file();  
+      continue;
     }
     if (block[i +0].type == TOK_CWD &&
         block[i +1].type == TOK_STR)
     {
       if (block[i +1].str[0] == '/' ||
           block[i +1].str[0] == '\\')
-      { app_set_cwd(block[i +1].str); }
+      { 
+        app_set_cwd(block[i +1].str);
+        continue;
+      }
       else
       { 
         char _cwd[64];
         sprintf(_cwd, "\\%s", block[i +1].str);
         app_cat_cwd(_cwd); 
+        continue;
       }
     }
   }
