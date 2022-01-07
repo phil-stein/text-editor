@@ -23,7 +23,7 @@ _plus the todo-list in text library_
 - [x] line numbers
 - [x] scroll
 - [ ] more commands
-  - [ ] close
+  - [x] close
   - [ ] view settings
   - [ ] set font size
   - [ ] set font 

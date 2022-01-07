@@ -64,7 +64,9 @@ typedef struct glyph_render_info
   rgbf tint;
 }glyph;
 
-#define FONT_POOL_MAX 512
+#define FONT_POOL_MAX  512
+#define FONT_PATH_MAX  256
+#define FONT_NAME_MAX  128
 typedef struct
 {
   FT_Face face;   // freetype font info
@@ -73,15 +75,13 @@ typedef struct
 
   glyph pool[FONT_POOL_MAX];
   int pool_pos;
+  
+  char path[FONT_PATH_MAX];
+  char name[FONT_NAME_MAX]; // @TODO: replace with char* into 'path' 
 
 }font_t;
 
 #define FONT_INIT()   { .face = NULL, .size = 0, .gw = 0, .gh = 0, .pool_pos = 0, }  
-
-
-#define FONT_PATH_MAX   256
-#define FONT_NAME_MAX   128
-#define GLYPH_POOL_MAX  256
 
 
 void text_load_font(const char* font_path, int font_size, font_t* font);
@@ -91,7 +91,5 @@ void text_free_font(font_t* font);
 
 glyph* text_make_glyph(int code, font_t* font);
 glyph* text_get_glyph(int code, font_t* font);
-
-const char* text_get_font(int* size);
 
 #endif

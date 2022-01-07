@@ -101,6 +101,18 @@ void cmd_tokenize(int codes[], int codes_len, cmd_token_block block, int* block_
       i += 3;
       continue;
     }
+    if (codes[i +0] == 'c' &&
+        codes[i +1] == 'l' &&
+        codes[i +2] == 'o' &&
+        codes[i +3] == 's' &&
+        codes[i +4] == 'e' )
+    {
+      t.type = TOK_CLOSE;
+      block[*block_len] = t;
+      *block_len += 1;
+      i += 4;
+      continue;
+    }
 
     // -- number --
     int str_pos = 0;
@@ -186,7 +198,7 @@ void cmd_interpret(cmd_token_block block, int block_len)
       int n = strtol(block[i +2].str, NULL, 10);
       P_INT(n);
       P("-- post --");
-      // text_set_font_size(n);
+      app_resize_fonts(n);
       continue;
     }
     if (block[i +0].type == TOK_PRINT)
@@ -210,13 +222,13 @@ void cmd_interpret(cmd_token_block block, int block_len)
       if (block[i +1].type == TOK_FONT)
       {
         int font_size;
-        const char* font_name = text_get_font(&font_size);
-        PF("print | font: '%s', size: %d\n", font_name, font_size);
+        font_t* font = app_get_main_font();
+        PF("print | font: '%s', size: %d\n", font->name, font->size);
         char  buf[40 + 16];
         char* buf_ptr = buf;
-        buf_ptr += sprintf(buf_ptr, "font: '%.40s", font_name);
-        buf_ptr += sprintf(buf_ptr, strlen(font_name) > 40 ? "...'" : "'"); 
-        buf_ptr += sprintf(buf_ptr, ", size: %d",font_size);
+        buf_ptr += sprintf(buf_ptr, "font: '%.40s", font->name);
+        buf_ptr += sprintf(buf_ptr, strlen(font->name) > 40 ? "...'" : "'"); 
+        buf_ptr += sprintf(buf_ptr, ", size: %d",font->size);
         app_fill_out(buf);
         continue;
       }
@@ -233,8 +245,8 @@ void cmd_interpret(cmd_token_block block, int block_len)
     {
         if (block[i +1].type == TOK_NEW)
         { app_new_file(); continue; }
-        // if (block[i +1].type == TOK_STR)
-        // { app_load_file(block[i +1].str); continue; }
+        if (block[i +1].type == TOK_STR)
+        { app_load_file(block[i +1].str); continue; }
     }
     if (block[i +0].type == TOK_SAVE)
     {
@@ -262,6 +274,10 @@ void cmd_interpret(cmd_token_block block, int block_len)
         app_cat_cwd(_cwd); 
         continue;
       }
+    }
+    if (block[i +0].type == TOK_CLOSE)
+    {
+      app_quit();
     }
   }
 

@@ -12,12 +12,12 @@
 FT_Library  library;
 // FT_Face     face;
 
-int glyph_h = 0;  // rough estimate not acutal size
-int glyph_w = 0;  // rough estimate not acutal size
+// int glyph_h = 0;  // rough estimate not acutal size
+// int glyph_w = 0;  // rough estimate not acutal size
 
-char cur_font_path[FONT_PATH_MAX];
-char cur_font_name[FONT_NAME_MAX];
-int  cur_font_size = 0;
+// char cur_font_path[FONT_PATH_MAX];
+// char cur_font_name[FONT_NAME_MAX];
+// int  cur_font_size = 0;
 
 // glyph glyph_pool[GLYPH_POOL_MAX];
 // int   glyph_pool_pos = 0;
@@ -25,18 +25,18 @@ int  cur_font_size = 0;
 // ---- func decls ----
 INLINE glyph text_ft_bitmap_to_glyph(FT_Bitmap* b);
 
-// @TODO: load ascii and the use another glyph_pool for the buffered chars
-
-void text_load_font(const char* font_path, int font_size, font_t* font)
+// @TODO: doesnt completely clean font
+void text_load_font(const char* _font_path, int font_size, font_t* font)
 {
+  // copy before cleaning font
+  char font_path[FONT_PATH_MAX];
+  strcpy(font_path, _font_path);
+
   // -- cleanup --
   FT_Done_Face(font->face);
-  // FT_Done_FreeType(library);
+  *font = (font_t)FONT_INIT();
   font->face = NULL;
-  // library = NULL;
   font->pool_pos = 0; 
-  font_t tmp = FONT_INIT();
-  *font = tmp;
 
   // ---- font ----
   int error = 0;
@@ -44,6 +44,8 @@ void text_load_font(const char* font_path, int font_size, font_t* font)
   error = FT_Init_FreeType( &library );
   FREETYPE_ERR_CHECK(error, "error during library init.");
 
+  P_STR(font_path);
+  
   error = FT_New_Face(library, font_path, 0, &font->face);
   FREETYPE_ERR_CHECK(error, "error during face init.");
   
@@ -59,12 +61,15 @@ void text_load_font(const char* font_path, int font_size, font_t* font)
       y );            // vertical device resolution    (dpi)
   FREETYPE_ERR_CHECK(error, "error during face sizing.");
 
-  glyph_w = font_size * 2;  
-  glyph_h = font_size * 4; // * 1.75f; // 14
-  font->gw = glyph_w;
-  font->gh = glyph_h;
+  font->gw = font_size * 2;
+  font->gh = font_size * 4;
 
-  strcpy(cur_font_path, font_path);
+  // -- load ascii --
+  for (int i = U_SPACE; i <= 127; ++i)
+  { text_make_glyph(i, font); }
+  // ----------------
+
+  strcpy(font->path, font_path);
   // get end of path / start of file name
   int pos = 0;
   for (int i = strlen(font_path) -1; i >= 0; --i)
@@ -75,14 +80,14 @@ void text_load_font(const char* font_path, int font_size, font_t* font)
   int cpy = 0;
   for (int i = pos; i < strlen(font_path) && i < FONT_NAME_MAX; ++i)
   {
-    cur_font_name[cpy++] = font_path[i];
+    font->name[cpy++] = font_path[i];
   }
-  cur_font_size = font_size;
+  font->name[cpy] = '\0';
   font->size    = font_size;
 
   PF("-> font loaded\n"); 
-  PF("  -> font-name: %s\n",   cur_font_name);
-  PF("  -> font-size: %d\n",   cur_font_size);
+  PF("  -> font-name: %s\n",   font->name);
+  PF("  -> font-size: %d\n",   font->size);
   PF("  -> font-glyphs: %d\n", (int)font->face->num_glyphs);
   PF("  -> has color: %s\n",   STR_BOOL(FT_HAS_COLOR(font->face)));
   PF("  -> is sfnt: %s\n",     STR_BOOL(FT_IS_SFNT(font->face)));
@@ -91,8 +96,8 @@ void text_load_font(const char* font_path, int font_size, font_t* font)
 }
 void text_set_font_size(int size, font_t* font)
 {
-  P_STR(cur_font_path);
-  text_load_font(cur_font_path, size, font);
+  P_STR(font->path);
+  text_load_font(font->path, size, font);
 }
 
 
@@ -198,9 +203,4 @@ glyph* text_get_glyph(int code, font_t* font)
   return text_make_glyph(code, font);
 }
 
-const char* text_get_font(int* size)
-{
-  *size = cur_font_size;
-  return cur_font_name;
-}
 

@@ -14,7 +14,7 @@ features:
 - [x] line draw
 - [x] block draw
 - [ ] font resize
-- [ ] font passed as struct
+- [x] font passed as struct
 - [ ] colored text
   - [x] colored glyph
   - [x] colored line

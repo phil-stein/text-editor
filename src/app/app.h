@@ -14,9 +14,12 @@ void app_cat_cwd(const char* cat);
 const char* app_get_cwd();
 
 void app_new_file();
-void app_load_file(const char* path, font_t* font);
+void app_load_file(const char* path);
 void app_save_open_file();
 void app_save_open_file_as(const char* path);
+
+font_t* app_get_main_font();
+void app_resize_fonts(int size);
 
 void app_fill_out(const char* str);
 #endif

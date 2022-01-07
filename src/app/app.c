@@ -18,7 +18,8 @@ bool wiref_act = false;
 #define CWD_MAX 128
 char cwd[CWD_MAX];
 
-#define BUFFER_MAX 512
+// @TODO: make this dynamic
+#define BUFFER_MAX 20000
 int buffer[BUFFER_MAX];
 int buffer_pos = 0;
 
@@ -78,9 +79,14 @@ rgbf line_num_col = { 0.7f, 0.7f, 0.8f };
 // static u32 blank_tex = -1;
 // static u32 crate_tex = -1;
 
+font_t font_x;
 font_t font_s;
 font_t font_m;
-font_t font_x;
+font_t font_l;
+#define FONT_X_SIZE_DIF  -4
+#define FONT_S_SIZE_DIF  -2
+#define FONT_M_SIZE_DIF   0
+#define FONT_L_SIZE_DIF   2
 
 font_t* font_main;
 font_t* font_line_nr;
@@ -107,31 +113,25 @@ void app_init()
   
   // ---- text init ---
   
-  text_load_font(
-"assets/fonts/\
-JetBrains Mono NL Regular \
-Nerd Font Complete Mono Windows Compatible.ttf", 
-      11, &font_m);
-  // P("-> text_init() finished");
- 
-  text_load_font("assets/fonts/CascadiaMono.ttf",
-      16, &font_x);
-
-  text_load_font("assets/fonts/CascadiaMonoItalic.ttf",
-      10, &font_s);
+  int size = 12;
+  char* path = "assets/fonts/JetBrainsMonoNL-Regular.ttf"; // "assets/fonts/CascadiaMono.ttf"
+  
+  text_load_font(path, size + FONT_X_SIZE_DIF, &font_x);
+  text_load_font(path, size + FONT_S_SIZE_DIF, &font_s);
+  text_load_font(path, size + FONT_M_SIZE_DIF, &font_m);
+  text_load_font(path, size + FONT_L_SIZE_DIF, &font_l);
 
   font_main     = &font_m;
   font_line_nr  = &font_s;
-  font_cmd      = &font_s;
-  font_out      = &font_m;
-  font_status   = &font_x;
+  font_cmd      = &font_m;
+  font_out      = &font_x;
+  font_status   = &font_l;
   
   text_draw_init(font_main);
-  // P("-> text_draw_init() finished");
 
   // ------------------
 
-  app_load_file("assets/examples/text.txt", font_main);
+  app_load_file("assets/examples/text.txt");
 
   g_full = text_get_glyph(U_FULL, font_main);
 
@@ -198,7 +198,7 @@ void app_update(float dt)
   text_draw_line(VEC2_XY( (2*w) - font_status->gw*(status_pos +4), -h * 2 + font_status->gh * 2), status, status_pos, font_status);
   // text_draw_quad(VEC2_XY(0, -h), VEC2_XY(w, 200), RGB_F_RGB(1));// RGB_F(0.2f, 0.2f, 0.2f));
   
-  if (cmd_len >= 1)
+  if (cmd_len > 0)
   { 
     vec2 pos = VEC2_INIT(0);
     text_line_pos(cmd_cursor, pos, cmd, cmd_len -1, font_cmd);
@@ -207,7 +207,6 @@ void app_update(float dt)
       g_full/*&cmd[cmd_len -1]*/, RGB_F(0.3f, 0.3f, 0.35f)); 
     text_draw_line(VEC2_XY(0, -h * 2 + g_h), cmd, cmd_len, font_cmd);
   }
-  // text_draw_line(VEC2_XY(0, -h * 2 + g_h), cmd, cmd_len == 1 ? 0 : cmd_len);
   
   if (is_key_pressed(KEY_Escape))
   {
@@ -246,7 +245,7 @@ void app_new_file()
   open_is_new = true;
   STATUS_FILL("~ new file ~");
 }
-void app_load_file(const char* path, font_t* font)
+void app_load_file(const char* path)
 {
   buffer_pos = 0;
   cursor = 0;
@@ -254,7 +253,7 @@ void app_load_file(const char* path, font_t* font)
   strcpy(open_path, path);
   int txt_len = 0;
   char* txt = read_text_file_len(path, &txt_len);
-  for (int i = 0; i < txt_len; ++i)
+  for (int i = 0; i < txt_len && i < BUFFER_MAX; ++i)
   { 
     if (txt[i] == U_TAB)
     { 
@@ -313,6 +312,18 @@ void app_fill_out(const char* str)
   OUT_FILL(str);
 }
 
+font_t* app_get_main_font()
+{
+  return font_main;
+}
+void app_resize_fonts(int size)
+{
+  text_set_font_size(size + FONT_X_SIZE_DIF, &font_x);
+  text_set_font_size(size + FONT_S_SIZE_DIF, &font_s);
+  text_set_font_size(size + FONT_M_SIZE_DIF, &font_m);
+  text_set_font_size(size + FONT_L_SIZE_DIF, &font_l);
+}
+
 void app_utf8_callback(int code)
 {
   // PF("pressed: %d | '%c'\n", code, (char)code);
@@ -338,8 +349,8 @@ void app_key_callback(key _key, input_state state, mod_flags mods)
 	}
   if (in_cmd)      
   {
-    if (_key == KEY_LeftArrow)  { CMD_CURSOR_L();  }
-    if (_key == KEY_RightArrow) { CMD_CURSOR_R(); }
+    // if (_key == KEY_LeftArrow)  { CMD_CURSOR_L();  }
+    // if (_key == KEY_RightArrow) { CMD_CURSOR_R(); }
 
     if (_key == KEY_Enter)
     { 
@@ -369,10 +380,11 @@ void app_key_callback(key _key, input_state state, mod_flags mods)
       text_insert_char(buffer, &buffer_pos, BUFFER_MAX, cursor, U_CR); 
       cursor++;
     }
-    if (_key == KEY_Backspace)
+    if (_key == KEY_Backspace && 
+        buffer[cursor-1] != U_CR && cursor > 0)
     { 
       text_remove_char(buffer, (int*)&buffer_pos, BUFFER_MAX, cursor); 
-      cursor_left();
+      cursor = MAX(0, cursor -1);
     }
     if (_key == KEY_Tab)
     {
@@ -388,6 +400,7 @@ void app_key_callback(key _key, input_state state, mod_flags mods)
 INLINE void cursor_left()
 {
   cursor = MAX(0, cursor -1);
+  cursor = buffer[cursor] == U_CR ? cursor +1 : cursor;
 }
 INLINE void cursor_right()
 {
