@@ -18,6 +18,7 @@ unsigned int blank_tex = 0;
 bool glyph_box_act = false;
 
 u32 img_vao;
+u32 img_vbo;
 
 static glyph* g_full = NULL;
 
@@ -36,11 +37,10 @@ void text_draw_init(font_t* font)
 	 -1.0f,  1.0f,  0.0f, 1.0f,
 	};
 	// screen quad VAO
-  u32 vbo;
 	glGenVertexArrays(1, &img_vao);
-	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &img_vbo);
 	glBindVertexArray(img_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, img_vbo);
 	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(f32), &quad_verts, GL_STATIC_DRAW); // quad_verts is 24 long
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
@@ -81,11 +81,13 @@ void text_draw_glyph_col(vec2 pos, glyph* g, rgbf color)
   _pos[1] += h; 
   _pos[0] *= 0.5f;
   _pos[1] *= 0.5f;
+  
   vec2 _size;
   vec2_copy(VEC2(1), _size);
   _size[0] /= (float)w;
   _size[1] /= (float)h;
   vec2_mul_f(_size, 2, _size);
+  
   shader_use(&text_shader);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -137,20 +139,34 @@ void text_draw_img(vec2 pos, vec2 size, u32 tex, rgbf tint)
   // ============================
   //           von erik
   // ============================
-  _pos[0] = 2 * (_pos[0] / w) -1;
-  _pos[1] = 2 * (_pos[1] / h) +1;
+  // _pos[0] = 2 * (_pos[0] / w) -1;
+  // _pos[1] = 2 * (_pos[1] / h) +1;
+  _pos[0] -= w; 
+  _pos[1] += h;
+  vec2_mul_f(_pos, 0.25f, _pos);
+ 
+  float right  = _pos[0] + size[0] * 0.5f;
+  float top    = _pos[1] + size[1] * 0.5f; 
+	float verts[] = 
+	{ 
+	  // positions     // tex coords
+	  _pos[0],  top,     0.0f, 1.0f,      // left  top
+	  _pos[0], _pos[1],  0.0f, 0.0f,      // left  bottom
+	  right,   _pos[1],  1.0f, 0.0f,      // right bottom
+
+	  right,  _pos[1],  1.0f, 0.0f,      // right bottom 
+	  right,   top,     1.0f, 1.0f,      // right top
+	  _pos[0], top,     0.0f, 1.0f,      // left  top
+	};
+  glBindBuffer(GL_ARRAY_BUFFER, img_vbo);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * (sizeof *verts), verts);
 
   vec2 _size;
   vec2_copy(VEC2(1), _size);
-  _size[0] /= w;
-  _size[1] /= h;
-  // vec2_mul_f(_size, 2, _size);
-  vec2_mul(_size, size, _size);
+  _size[0] /= (float)w;
+  _size[1] /= (float)h;
+  vec2_mul_f(_size, 2, _size);
   
-  // P_IL_VEC2(pos); PF("  >>  "); P_VEC2(_pos);
-  _pos[0] += _size[0];
-  // _pos[1] -= _size[1];
-
   shader_use(&img_shader);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex); 
@@ -159,18 +175,9 @@ void text_draw_img(vec2 pos, vec2 size, u32 tex, rgbf tint)
   shader_set_vec2(&img_shader, "pos", _pos);
   shader_set_vec2(&img_shader, "size", _size);
 
-	glBindVertexArray(img_vao);
+  glBindVertexArray(img_vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
   
-  // debug
-  static bool is_debug = false;
-  if (!is_debug) 
-  {
-    is_debug = true;
-    text_draw_img(_pos, VEC2(10), blank_tex, RGB_F(0.8f, 0.1f, 0.4f));
-    is_debug = false;
-  }
-
 }
 void text_draw_quad(vec2 pos, vec2 size, rgbf color)
 {
@@ -185,18 +192,21 @@ void text_draw_line_col(vec2 pos, int* g, int g_len, rgbf color, font_t* font)
   int g_w = font->gw;
   int g_h = font->gh;
 
+  vec2 _pos;
+  vec2_copy(pos, _pos);
+
   for(int i = 0; i < g_len; ++i)
   {
     glyph* _g = text_get_glyph(g[i], font);
     // just for debug
-    if(pos[0] + (g_w*2) >= w * 2)
-    { pos[1] -= g_h; pos[0] = 0; }
+    if(_pos[0] + (g_w*2) >= w * 2)
+    { _pos[1] -= g_h; _pos[0] = 0; }
      
     if (glyph_box_act)
-    { text_draw_glyph_box(pos, _g, VEC3_XYZ(1, 0, 1)); }
+    { text_draw_glyph_box(_pos, _g, VEC3_XYZ(1, 0, 1)); }
      
-    text_draw_glyph_col(pos, _g, color); 
-    pos[0] += _g->advance;
+    text_draw_glyph_col(_pos, _g, color); 
+    _pos[0] += _g->advance;
   }
 }
 void text_line_pos(int _g, vec2 pos, int* g, int g_len, font_t* font)
@@ -223,8 +233,11 @@ void text_draw_block(vec2 pos, int* g, int g_len, font_t* font)
   int g_w = font->gw;
   int g_h = font->gh;
 
-  vec2_add(pos, VEC2_Y(-g_h), pos); // window bar on top
-  float x = pos[0];
+  vec2 _pos;
+  vec2_copy(pos, _pos);
+  
+  vec2_add(_pos, VEC2_Y(-g_h), _pos); // window bar on top
+  float x = _pos[0];
 
   // vec2 size = VEC2_INIT(0.001f);
   for(int i = 0; i < g_len; ++i)
@@ -237,17 +250,17 @@ void text_draw_block(vec2 pos, int* g, int g_len, font_t* font)
     if(g[i] == U_CR)  // 0x0D: '\n', carriage return
     { 
       // text_draw_glyph_box(pos, g_full, RGB_F(0, 1, 1));
-      pos[1] -= g_h; pos[0] = x; continue; 
+      _pos[1] -= g_h; _pos[0] = x; continue; 
     }
     
     if(pos[0] + (g_w*2) >= w * 2)
-    { pos[1] -= g_h; pos[0] = x; }
+    { _pos[1] -= g_h; _pos[0] = x; }
     
     if (glyph_box_act)
-    { text_draw_glyph_box(pos, _g, VEC3_XYZ(1, 0, 1)); }
+    { text_draw_glyph_box(_pos, _g, VEC3_XYZ(1, 0, 1)); }
     
-    text_draw_glyph(pos, _g); 
-    pos[0] += _g->advance;
+    text_draw_glyph(_pos, _g); 
+    _pos[0] += _g->advance;
   }
 }
 void text_block_pos(int _g, vec2 pos, int* g, int g_len, font_t* font)

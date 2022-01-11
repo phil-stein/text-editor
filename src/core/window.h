@@ -1,7 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "core.h"
+#include <global/global.h>
 
 typedef enum window_type { WINDOW_MIN, WINDOW_MAX, WINDOW_FULL } window_type;
 

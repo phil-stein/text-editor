@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "core.h"
+#include <global/global.h>
 #include <math/math_inc.h>
 
 typedef struct shader

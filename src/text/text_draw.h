@@ -27,12 +27,5 @@ void text_line_pos(int _g, vec2 pos, int* g, int g_len, font_t* font);
 void text_draw_block(vec2 pos, int* g, int g_len, font_t* font);
 void text_block_pos(int _g, vec2 pos, int* g, int g_len, font_t* font);
 
-TEXT_D_INLINE int text_block_lines(int* g, int g_len)
-{ 
-  int l = 0; 
-  for (int i = 0; i < g_len; ++i) 
-  { if (g[i] == U_CR) { l++; } } 
-  return l; 
-}
 
 #endif

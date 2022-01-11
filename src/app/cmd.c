@@ -1,6 +1,7 @@
 #include "cmd.h"
 #include "app.h"
-#include <core/core.h>
+
+#include <global/global.h>
 #include <core/window.h>
 
 #include <ctype.h>
@@ -221,7 +222,6 @@ void cmd_interpret(cmd_token_block block, int block_len)
       }
       if (block[i +1].type == TOK_FONT)
       {
-        int font_size;
         font_t* font = app_get_main_font();
         PF("print | font: '%s', size: %d\n", font->name, font->size);
         char  buf[40 + 16];

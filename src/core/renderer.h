@@ -1,7 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "core.h"
+#include <global/global.h>
+
 #include "texture.h"
 #include <math/math_inc.h>
 #include <text/text.h>

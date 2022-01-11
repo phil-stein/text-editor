@@ -1,7 +1,7 @@
 #ifndef TIME_H
 #define TIME_H
 
-#include "core.h"
+#include <global/global.h>
 
 
 // implementations in main.c

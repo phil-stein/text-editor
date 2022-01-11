@@ -15,17 +15,16 @@ fonts in *"assets/fonts"* folder not mine <br>
 ### roadmap:
 _plus the todo-list in text library_
 
-- [ ] status line
+- [x] status line
   - [x] current file
-  - [ ] cwd
-  - [ ] in cmd
+  - [x] in cmd
 
 - [x] line numbers
 - [x] scroll
 - [ ] more commands
   - [x] close
   - [ ] view settings
-  - [ ] set font size
+  - [x] set font size
   - [ ] set font 
   
 - [ ] hotkeys

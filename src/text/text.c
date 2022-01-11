@@ -9,20 +9,10 @@
 
 #include <GLAD/glad.h>
 
+
 FT_Library  library;
-// FT_Face     face;
 
-// int glyph_h = 0;  // rough estimate not acutal size
-// int glyph_w = 0;  // rough estimate not acutal size
-
-// char cur_font_path[FONT_PATH_MAX];
-// char cur_font_name[FONT_NAME_MAX];
-// int  cur_font_size = 0;
-
-// glyph glyph_pool[GLYPH_POOL_MAX];
-// int   glyph_pool_pos = 0;
-
-// ---- func decls ----
+/// ---- func decls ----
 INLINE glyph text_ft_bitmap_to_glyph(FT_Bitmap* b);
 
 // @TODO: doesnt completely clean font
@@ -33,10 +23,11 @@ void text_load_font(const char* _font_path, int font_size, font_t* font)
   strcpy(font_path, _font_path);
 
   // -- cleanup --
-  FT_Done_Face(font->face);
-  *font = (font_t)FONT_INIT();
-  font->face = NULL;
-  font->pool_pos = 0; 
+  // FT_Done_Face(font->face);
+  // *font = (font_t)FONT_INIT();
+  // font->face = NULL;
+  // font->pool_pos = 0; 
+  FONT_RESET(font);
 
   // ---- font ----
   int error = 0;
@@ -103,7 +94,6 @@ void text_set_font_size(int size, font_t* font)
 
 void text_cleanup()
 {
-  // FT_Done_Face(face);
   FT_Done_FreeType(library);
 }
 void text_free_font(font_t* font)
@@ -181,15 +171,14 @@ glyph* text_make_glyph(int code, font_t* font)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32)));
 
-  glyph g = text_ft_bitmap_to_glyph(&font->face->glyph->bitmap);
+  glyph g   = text_ft_bitmap_to_glyph(&font->face->glyph->bitmap);
   g.code    = code;
   g.advance = font->face->glyph->advance.x / 32; // / 64; // @UNCLEAR: should be 64
-  // ASSERT(glyph_pool_pos < GLYPH_POOL_MAX -1);
-  // glyph_pool[glyph_pool_pos++] = g; 
-  // glyph_pool[glyph_pool_pos -1].vao = vao;
+  g.vbo     = vbo;
+  g.vao     = vao;
+  
   ASSERT(font->pool_pos < FONT_POOL_MAX -1);
-  font->pool[font->pool_pos]       = g; 
-  font->pool[font->pool_pos++].vao = vao; 
+  font->pool[font->pool_pos++] = g; 
   
   return &font->pool[font->pool_pos -1];
 }

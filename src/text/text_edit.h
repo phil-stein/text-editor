@@ -3,11 +3,7 @@
 
 #include "text.h" 
 
-// static to avoid duplication when including header multiple times
-// forced inline to always inline the functions
-#define TEXT_E_INLINE static inline __attribute((always_inline))
-
-TEXT_E_INLINE void text_insert_char(int* buf, int* buf_len, int buf_max, int pos, int code)
+INLINE void text_insert_char(int* buf, int* buf_len, int buf_max, int pos, int code)
 {
   assert(buf_max > *buf_len +1);
   for (int i = *buf_len; i > pos; --i)
@@ -18,7 +14,7 @@ TEXT_E_INLINE void text_insert_char(int* buf, int* buf_len, int buf_max, int pos
   *buf_len += 1;
 }
 
-TEXT_E_INLINE void text_remove_char(int* buf, int* buf_len, int buf_max, int pos)
+INLINE void text_remove_char(int* buf, int* buf_len, int buf_max, int pos)
 {
   assert(buf_max > *buf_len +1);
   for (int i = pos; i < *buf_len; ++i)
@@ -27,3 +23,12 @@ TEXT_E_INLINE void text_remove_char(int* buf, int* buf_len, int buf_max, int pos
   }
   *buf_len -= 1;
 }
+
+INLINE int text_block_lines(int* g, int g_len)
+{ 
+  int l = 0; 
+  for (int i = 0; i < g_len; ++i) 
+  { if (g[i] == U_CR) { l++; } } 
+  return l; 
+}
+

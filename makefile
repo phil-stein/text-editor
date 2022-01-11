@@ -9,10 +9,11 @@ CC = @gcc -g -Wall
 NAME = app.exe
 
 SRC_DIR  = src
-CORE_DIR = $(SRC_DIR)/core
-MATH_DIR = $(SRC_DIR)/math
-TEXT_DIR = $(SRC_DIR)/text
-APP_DIR  = $(SRC_DIR)/app
+GLOBL_DIR = $(SRC_DIR)/global
+CORE_DIR  = $(SRC_DIR)/core
+MATH_DIR  = $(SRC_DIR)/math
+TEXT_DIR  = $(SRC_DIR)/text
+APP_DIR   = $(SRC_DIR)/app
 
 OBJ_DIR = bin
 
@@ -49,6 +50,7 @@ _INC = 							  \
 		external					\
 		external/FREETYPE \
 		$(SRC_DIR)				\
+		$(SRC_DIR)/global	\
 		$(SRC_DIR)/core		\
 		$(SRC_DIR)/math		\
 		$(SRC_DIR)/text		\

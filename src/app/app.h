@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <core/core.h>
+#include <global/global.h>
 #include <text/text_inc.h>
 
 void app_init();

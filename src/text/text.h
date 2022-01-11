@@ -1,12 +1,13 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include <core/core.h>
+#include <global/global.h>
 #include <core/texture.h>
 #include <math/math_inc.h>
 
 #include <FREETYPE/ft2build.h>
 #include FT_FREETYPE_H
+
 
 #define FT_ERR_STR(err)                                   \
     (err) == 0x00 ? "no error" :                          \
@@ -60,6 +61,7 @@ typedef struct glyph_render_info
   u32  code;
   u32  advance;
   u32  vao;
+  u32  vbo;
   u32  tex;
   rgbf tint;
 }glyph;
@@ -82,6 +84,14 @@ typedef struct
 }font_t;
 
 #define FONT_INIT()   { .face = NULL, .size = 0, .gw = 0, .gh = 0, .pool_pos = 0, }  
+
+#define FONT_RESET(f) { for (int i=0; i<(f)->pool_pos; ++i)             \
+                        { glDeleteTextures(1, &(f)->pool[i].tex);       \
+                          glDeleteBuffers(1, &(f)->pool[i].vbo); }     \
+                        FT_Done_Face((f)->face);                        \
+                        (f)->face = NULL; (f)->size = 0;                \
+                        (f)->gw = 0; (f)->gh = 0; (f)->pool_pos = 0;    \
+                        (f)->path[0] = '\0'; (f)->name[0] = '\0'; }  
 
 
 void text_load_font(const char* font_path, int font_size, font_t* font);

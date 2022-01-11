@@ -1,5 +1,5 @@
 #include "app.h"
-#include <core/core.h>
+#include <global/global.h>
 #include <core/window.h>
 #include <core/time.h>
 #include <core/renderer.h>

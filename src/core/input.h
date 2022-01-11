@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "core.h"
+#include <global/global.h>
 #include "window.h"
 
 // "input_state" mapps directly to glfws key definitions
@@ -27,6 +27,7 @@ enum key
     KEY_Minus = 45,
     KEY_Period = 46,
     KEY_Slash = 47,
+    KEY__Minus = KEY_Slash,
     KEY_Alpha0 = 48,
     KEY_Alpha1 = 49,
     KEY_Alpha2 = 50,
@@ -68,6 +69,7 @@ enum key
     KEY_LeftBracket = 91,
     KEY_Backslash = 92,
     KEY_RightBracket = 93,
+    KEY__Plus = KEY_RightBracket,
     KEY_GraveAccent = 96,
     KEY_World1 = 161,
     KEY_World2 = 162,

@@ -1,7 +1,7 @@
 #ifndef FILE_HANDLER_H
 #define FILE_HANDLER_H
 
-#include "core.h"
+#include <global/global.h>
 
 
 // returns true if the file under the specified path "file_path" exists, otherwise false
