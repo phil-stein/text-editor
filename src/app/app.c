@@ -82,7 +82,7 @@ static u32 blank_tex = -1;
 static u32 crate_tex = -1;
 
 #define FONT_SIZE_STEP  1
-int  font_size = 11;
+int  font_size = 14;
 
 font_t font_x = FONT_INIT();
 font_t font_s = FONT_INIT();

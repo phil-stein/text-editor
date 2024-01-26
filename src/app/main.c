@@ -13,7 +13,7 @@
 
 
 // ---- vars ----
-GLFWwindow* window;
+static GLFWwindow* window;
 
 f32 t_last_frame = 0.0f;
 f32 delta_t = 0.0f;
