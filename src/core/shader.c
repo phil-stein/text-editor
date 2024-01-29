@@ -80,7 +80,7 @@ shader create_shader_from_file(const char* vert_path, const char* frag_path, con
 	u64 len;
 
 	f = fopen(vert_path, "rb");
-	ERR_CHECKF(f != NULL, "loading vert shader text-file at: %s\n", vert_path);
+	ERR_CHECK(f != NULL, "loading vert shader text-file at: %s\n", vert_path);
 	
 
 	// get len of file
