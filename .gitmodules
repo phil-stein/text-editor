@@ -1,6 +1,7 @@
 [submodule "src/math"]
-  path = src/math
-  url  = https://github.com/phil-stein/math
-[submodule "src/text"]
-  path = src/text
-  url  = https://github.com/phil-stein/text
+	path = src/math
+	url = https://github.com/phil-stein/math
+[submodule "src/global"]
+  path = src/global
+  url  = https://github.com/phil-stein/global
+

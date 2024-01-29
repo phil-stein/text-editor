@@ -40,11 +40,13 @@ CMakeFiles/text_editor.dir/C_/Workspace/C/text_editor/src/app/ui.c.obj: \
  C:/Workspace/C/text_editor/src/math/math_m.h \
  C:/Workspace/C/text_editor/src/math/math_inc.h \
  C:/Workspace/C/text_editor/src/math/math_vec2.h \
- C:/Workspace/C/text_editor/src/math/math_ivec2.h \
  C:/Workspace/C/text_editor/src/math/math_vec3.h \
  C:/Workspace/C/text_editor/src/math/math_vec4.h \
+ C:/Workspace/C/text_editor/src/math/math_ivec2.h \
  C:/Workspace/C/text_editor/src/math/math_mat4.h \
+ C:/Workspace/C/text_editor/src/math/math_space.h \
  C:/Workspace/C/text_editor/src/math/math_color.h \
+ C:/Workspace/C/text_editor/src/math/math_rand.h \
  C:/Workspace/C/text_editor/external/FREETYPE/ft2build.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/config/ftheader.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/freetype.h \
