@@ -9,3 +9,13 @@
 # rar-files
 *.rar
 .zip
+
+# build & bin folder
+bin/*
+!build/*/*.cap     # renderdoc
+!build/*/*.a       # libraries
+!build/*/*.bat     # batch files
+!build/*/CMakeLists.txt
+!build/*/*/CMakeLists.txt
+!build/*/.gitkeep
+!build/*/*/.gitkeep
