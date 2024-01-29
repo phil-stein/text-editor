@@ -13,10 +13,5 @@
 # build & bin folder
 bin/*
 bin/*/*
-!build/*/*.cap     # renderdoc
-!build/*/*.a       # libraries
-!build/*/*.bat     # batch files
-!build/*/CMakeLists.txt
-!build/*/*/CMakeLists.txt
-!build/*/.gitkeep
-!build/*/*/.gitkeep
+bin/make/*
+bin/vs19/*

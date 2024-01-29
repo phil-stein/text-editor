@@ -1,3 +1,0 @@
-C:/Workspace/C/text_editor/build/make/CMakeFiles/text_editor.dir
-C:/Workspace/C/text_editor/build/make/CMakeFiles/edit_cache.dir
-C:/Workspace/C/text_editor/build/make/CMakeFiles/rebuild_cache.dir
