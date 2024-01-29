@@ -13,5 +13,5 @@
 # build & bin folder
 bin/*
 bin/*/*
-bin/make/*
-bin/vs19/*
+build/*
+build/*/*
