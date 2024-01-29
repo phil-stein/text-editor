@@ -12,6 +12,7 @@
 
 # build & bin folder
 bin/*
+bin/*/*
 !build/*/*.cap     # renderdoc
 !build/*/*.a       # libraries
 !build/*/*.bat     # batch files
