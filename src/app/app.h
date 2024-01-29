@@ -4,10 +4,23 @@
 #include <global/global.h>
 #include <text/text_inc.h>
 
+
+typedef struct app_data_t
+{
+  bool show_files_ui;
+}app_data_t;
+#define APP_DATA_INIT()     \
+{                           \
+  .show_files_ui = false,   \
+}
+
+app_data_t* app_data_get(); // @TODO: move to app_data.c
+
 void app_init();
 void app_update(float dt);
 
 void app_quit();    // implementation in main.c
+
 
 void app_set_cwd(const char* _cwd);
 void app_cat_cwd(const char* cat);

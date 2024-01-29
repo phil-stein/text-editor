@@ -47,6 +47,7 @@ void text_load_font(const char* _font_path, int font_size, font_t* font)
   error = FT_Set_Char_Size(
       font->face,     // handle to face object           
       0,              // char_width in 1/64th of points, 0: same as height  
+      // (font_size*64) *2,   // char_width test 
       font_size*64,   // char_height in 1/64th of points 
       x,              // horizontal device resolution  (dpi)  
       y );            // vertical device resolution    (dpi)
@@ -136,6 +137,7 @@ glyph* text_make_glyph(int code, font_t* font)
   
   if (font->face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
   {
+    // FT_RENDER_MODE_NORMAL
     error = FT_Render_Glyph(font->face->glyph, FT_RENDER_MODE_NORMAL); // aliased 256 gaylevels
     FREETYPE_ERR_CHECK(error, "error rendering glyph.");
   }

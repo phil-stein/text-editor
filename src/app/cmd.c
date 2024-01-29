@@ -6,6 +6,13 @@
 
 #include <ctype.h>
 
+static app_data_t* app_data = NULL;
+
+void cmd_init()
+{
+  app_data = app_data_get();
+}
+
 void cmd_parse(int codes[], int codes_len)
 {
   cmd_token_block block;
@@ -19,102 +26,97 @@ void cmd_tokenize(int codes[], int codes_len, cmd_token_block block, int* block_
   *block_len = 0;
   cmd_token t;
   P_INT(codes_len);
-  // start at 1 because '>'
+
+  #define ADD_TOK(tok, len)   \
+      t.type = (tok);         \
+      block[*block_len] = t;  \
+      *block_len += 1;        \
+      i += (len);
+
+  #define IS_SHORT(num)             \
+      (*block_len <= i + (num) ||   \
+       isspace(codes[i +num]))
+
+      // start at 1 because '>'
   for (int i = 1; i < codes_len; ++i)
   {
     if (isspace(codes[i])) { continue; }
 
+    // -- shorthands --
+    
+    if (codes[i +0] == 'w' && IS_SHORT(1))
+    { ADD_TOK(TOK_SAVE, 0); continue; }
+
+    if (codes[i +0] == 'q' && IS_SHORT(1))
+    { ADD_TOK(TOK_QUIT, 0); continue; }
+
+
+    if (codes[i +0] == 'w' &&
+        codes[i +1] == 'q' && IS_SHORT(2))
+    { ADD_TOK(TOK_SAVE, 0); ADD_TOK(TOK_QUIT, 1); continue; }
+
+    if (codes[i +0] == 'o' && IS_SHORT(1))
+    { ADD_TOK(TOK_OPEN, 0); continue; }
+
+    // -- keywords --
+    
     if (codes[i +0] == 'p' &&
         codes[i +1] == 'r' &&
         codes[i +2] == 'i' &&
         codes[i +3] == 'n' &&
         codes[i +4] == 't' )
-    {
-      t.type = TOK_PRINT;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 4;
-      continue;
-    }
+    { ADD_TOK(TOK_PRINT, 4); continue; }
     if (codes[i +0] == 'f' &&
         codes[i +1] == 'o' &&
         codes[i +2] == 'n' &&
         codes[i +3] == 't' )
-    {
-      t.type = TOK_FONT;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 3;
-      // PF("added font, next: '%c'\n", codes[i +1].code);
-      continue;
-    }
+    { ADD_TOK(TOK_FONT, 3); continue; }
     if (codes[i +0] == 's' &&
         codes[i +1] == 'i' &&
         codes[i +2] == 'z' &&
         codes[i +3] == 'e' )
-    {
-      t.type = TOK_SIZE;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 3;
-      // PF("added size, next: '%c'\n", codes[i +1].code);
-      continue;
-    }
+    { ADD_TOK(TOK_SIZE, 3); continue; }
     if (codes[i +0] == 'o' &&
         codes[i +1] == 'p' &&
         codes[i +2] == 'e' &&
         codes[i +3] == 'n' )
-    {
-      t.type = TOK_OPEN;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 3;
-      continue;
-    }
+    { ADD_TOK(TOK_OPEN, 3); continue; }
     if (codes[i +0] == 'c' &&
         codes[i +1] == 'w' &&
         codes[i +2] == 'd' )
-    {
-      t.type = TOK_CWD;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 2;
-      continue;
-    }
+    { ADD_TOK(TOK_CWD, 2); continue; }
     if (codes[i +0] == 'n' &&
         codes[i +1] == 'e' &&
         codes[i +2] == 'w' )
-    {
-      t.type = TOK_NEW;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 2;
-      continue;
-    }
+    { ADD_TOK(TOK_NEW, 2); continue; }
     if (codes[i +0] == 's' &&
         codes[i +1] == 'a' &&
         codes[i +2] == 'v' &&
         codes[i +3] == 'e' )
-    {
-      t.type = TOK_SAVE;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 3;
-      continue;
-    }
+    { ADD_TOK(TOK_SAVE, 3); continue; }
     if (codes[i +0] == 'c' &&
         codes[i +1] == 'l' &&
         codes[i +2] == 'o' &&
         codes[i +3] == 's' &&
         codes[i +4] == 'e' )
-    {
-      t.type = TOK_CLOSE;
-      block[*block_len] = t;
-      *block_len += 1;
-      i += 4;
-      continue;
-    }
-
+    { ADD_TOK(TOK_QUIT, 4); continue; }
+    if (codes[i +0] == 'q' &&
+        codes[i +1] == 'u' &&
+        codes[i +2] == 'i' &&
+        codes[i +3] == 't')
+    { ADD_TOK(TOK_QUIT, 3); continue; }
+    if (codes[i +0] == 'h' &&
+        codes[i +1] == 'e' &&
+        codes[i +2] == 'l' &&
+        codes[i +3] == 'p' )
+    { ADD_TOK(TOK_HELP, 3); continue; }
+    if (codes[i +0] == 'f' &&
+        codes[i +1] == 'i' &&
+        codes[i +2] == 'l' &&
+        codes[i +3] == 'e' &&
+        codes[i +4] == 's' )
+    { ADD_TOK(TOK_FILES, 4); continue; }
+    
     // -- number --
     int str_pos = 0;
     while (isdigit(codes[i]))
@@ -155,6 +157,9 @@ void cmd_tokenize(int codes[], int codes_len, cmd_token_block block, int* block_
     }
 
   }
+
+  #undef TOK_ADD 
+  #undef IS_SHORT
 }
 void cmd_interpret(cmd_token_block block, int block_len)
 {
@@ -175,6 +180,10 @@ void cmd_interpret(cmd_token_block block, int block_len)
     { P("-- NEW --"); continue; }
     if (block[i].type == TOK_SAVE)
     { P("-- SAVE --"); continue; }
+    if (block[i].type == TOK_HELP)
+    { P("-- HELP --"); continue; }
+    if (block[i].type == TOK_FILES)
+    { P("-- FILES --"); continue; }
     if (block[i].type == TOK_NUM)
     {
       int num = strtol(block[i].str, NULL, 10);
@@ -201,6 +210,13 @@ void cmd_interpret(cmd_token_block block, int block_len)
       P("-- post --");
       app_resize_fonts(n);
       continue;
+    }
+    if (block[i +0].type == TOK_HELP)
+    {
+      char buf[128];
+      SPRINTF(128, buf, 
+          "help, print (size / font / cwd / 'str'), close / quit, font size 'num', cwd 'str', open 'str', save"); 
+      app_fill_out(buf);
     }
     if (block[i +0].type == TOK_PRINT)
     {
@@ -275,7 +291,11 @@ void cmd_interpret(cmd_token_block block, int block_len)
         continue;
       }
     }
-    if (block[i +0].type == TOK_CLOSE)
+    if (block[i +0].type == TOK_FILES)
+    {
+      app_data->show_files_ui = !app_data->show_files_ui;
+    }
+    if (block[i +0].type == TOK_QUIT)
     {
       app_quit();
     }

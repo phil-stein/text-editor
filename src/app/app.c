@@ -1,5 +1,6 @@
 #include "app.h"
 #include "cmd.h"
+#include "ui.h"
 #include <core/input.h>
 #include <core/renderer.h>
 #include <core/time.h>
@@ -28,7 +29,7 @@ rgbf cursor_col = { 0.4f, 0.4f, 0.5f };
 int  scroll = 0;    // y lines to offset
 #define SCROLL_CAP 6
 
-#define CMD_KEY   '>'
+#define CMD_KEY   ':' // '>'
 #define CMD_START 0x25B6 // 0x25BA // 0x25B8 // '>'/  / 0x2192 
 #define CMD_MAX   128
 int  cmd[CMD_MAX];
@@ -82,7 +83,7 @@ static u32 blank_tex = -1;
 static u32 crate_tex = -1;
 
 #define FONT_SIZE_STEP  1
-int  font_size = 11;
+int  font_size = 14;
 
 font_t font_x = FONT_INIT();
 font_t font_s = FONT_INIT();
@@ -110,6 +111,8 @@ INLINE int  cursor_line();
 INLINE int  cursor_column();
 
 
+app_data_t app_data = APP_DATA_INIT();
+
 void app_init()
 {
   char* _cwd = _getcwd(NULL, 0);
@@ -117,9 +120,14 @@ void app_init()
   strcpy(cwd, _cwd);
   P_STR(cwd);
   
+  cmd_init();
+  
   // ---- text init ---
   
-  char* path = "assets/fonts/JetBrainsMonoNL-Regular.ttf"; // "assets/fonts/CascadiaMono.ttf"
+  char* path = "assets/fonts/JetBrainsMonoNL-Regular.ttf";
+  // char* path = "JetBrains Mono NL Regular Nerd Font Complete Mono Windows Compatible.ttf"; // dont work
+  // char* path = "assets/fonts/Raleway-Bold.ttf"; // dont work
+  // char* path = "assets/fonts/Roboto-Bold.ttf"; // dont work
   
   text_load_font(path, font_size + FONT_X_SIZE_DIF, &font_x);
   text_load_font(path, font_size + FONT_S_SIZE_DIF, &font_s);
@@ -240,18 +248,21 @@ void app_update(float dt)
   text_draw_line(status_pos, _status, _status_pos, font_status);
 
 
-  if (is_key_pressed(KEY_Escape))
+  // -- ui test --
+  // int title[] = { 't', 'i', 't', 'l', 'e' };
+  // int title_len = 5;
+  // ui_win_float(w - 400, -h + 400, RGB_F_RGB(0.6f), 
+  //     title, title_len, font_main, RGB_F_RGB(0.3f));
+  if (app_data.show_files_ui)
   {
-    app_quit();  
+    ui_win_files(font_main);
   }
-  if (is_key_pressed(KEY_F11))
-  {
-    static int w_mode = WINDOW_MIN;
-    w_mode = w_mode == WINDOW_MIN ? WINDOW_FULL : WINDOW_MIN;
-    window_set_mode(w_mode);  
-  }
-  if (is_key_pressed(KEY_Numpad0)) { scroll++; }
-  if (is_key_pressed(KEY_Numpad1)) { scroll--; }
+
+}
+
+app_data_t* app_data_get()
+{
+  return &app_data;
 }
 
 void app_set_cwd(const char* _cwd)
@@ -279,12 +290,18 @@ void app_new_file()
 }
 void app_load_file(const char* path)
 {
+  bool error  = false;
+  int txt_len = 0;
+  char* txt = read_text_file_len(path, &txt_len, &error);
+  if (error)
+  {
+    OUT_FILL("could not load file");
+    return;
+  }
   buffer_pos = 0;
   cursor = 0;
   open_is_new = false;
   strcpy(open_path, path);
-  int txt_len = 0;
-  char* txt = read_text_file_len(path, &txt_len);
   for (int i = 0; i < txt_len && i < BUFFER_MAX; ++i)
   { 
     if (txt[i] == U_TAB)
@@ -376,7 +393,18 @@ void app_utf8_callback(int code)
 void app_key_callback(key _key, input_state state, mod_flags mods)
 {
   // @TODO: delete, start, end
- 
+  
+  if (_key == KEY_Escape && in_cmd)
+  { CMD_FLUSH(); in_cmd = false; }
+  if (_key == KEY_F11)
+  {
+    static int w_mode = WINDOW_MIN;
+    w_mode = w_mode == WINDOW_MIN ? WINDOW_FULL : WINDOW_MIN;
+    window_set_mode(w_mode);  
+  }
+  if (is_key_pressed(KEY_Numpad0)) { scroll++; }
+  if (is_key_pressed(KEY_Numpad1)) { scroll--; }
+  
   if (_key == KEY_S && HAS_FLAG(mods, MOD_CTRL))
   { app_save_open_file(); }
   if (_key == KEY__Plus && HAS_FLAG(mods, MOD_CTRL))

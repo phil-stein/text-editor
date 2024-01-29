@@ -23,6 +23,7 @@ _plus the todo-list in text library_
 - [x] scroll
 - [ ] more commands
   - [x] close
+  - [x] help
   - [ ] view settings
   - [x] set font size
   - [ ] set font 
@@ -37,6 +38,7 @@ _plus the todo-list in text library_
 - [ ] build-system integration
 - [ ] configurable key bindings
 - [ ] menus
+  - [ ] window system
   - [ ] file viewer
     - [ ] basic view of cwd
     - [ ] traverse and open files

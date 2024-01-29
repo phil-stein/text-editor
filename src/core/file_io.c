@@ -44,17 +44,21 @@ char* read_text_file(const char* file_path)
 
     return text;
 }
-char* read_text_file_len(const char* file_path, int* length)
+char* read_text_file_len(const char* file_path, int* length, bool* error)
 {
     FILE* f;
     char* text;
     long len;
+    *error = true;
 
     f = fopen(file_path, "rb");
     if (f == NULL)
     {
         fprintf(stderr, "[ERROR] loading text-file at: %s\n", file_path);
-        assert(false);
+        // assert(false);
+        *error  = true;
+        *length = 0;
+        return NULL;
     }
 
     // get len of file
@@ -74,6 +78,7 @@ char* read_text_file_len(const char* file_path, int* length)
     fclose(f);
     text[len -1] = '\0'; 
 
+    *error  = false;
     *length = len;
     return text;
 }

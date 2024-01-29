@@ -24,7 +24,7 @@ _OBJS =					\
 	file_io.o			\
 	shader.o			\
 	input.o				\
-	texture.o			
+	texture.o
 # text
 _OBJS += 				\
 	text.o				\
@@ -33,7 +33,8 @@ _OBJS += 				\
 _OBJS += 				\
 	main.o				\
 	app.o					\
-	cmd.o
+	cmd.o					\
+	ui.o
 
 # put the OBJ_DIR in front of the obj names
 OBJS = $(patsubst %,$(OBJ_DIR)/%,$(_OBJS))
@@ -96,6 +97,6 @@ clean:
 # clean and them make all
 cleanm: clean all
 
-run: clean all
+run: all
 	@echo --- $(NAME) --- 
 	@$(NAME)
