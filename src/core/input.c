@@ -7,7 +7,7 @@
 // ---- vars ----
  
 // current window
-GLFWwindow* window;
+static GLFWwindow* window;
 
 #define KEY_CALLBACK_MAX 12
 key_callback key_callbacks[KEY_CALLBACK_MAX];

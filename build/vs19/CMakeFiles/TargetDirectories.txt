@@ -1,0 +1,3 @@
+C:/Workspace/C/text_editor/build/vs19/CMakeFiles/text_editor.dir
+C:/Workspace/C/text_editor/build/vs19/CMakeFiles/ALL_BUILD.dir
+C:/Workspace/C/text_editor/build/vs19/CMakeFiles/ZERO_CHECK.dir
