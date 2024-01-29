@@ -5,3 +5,6 @@
   path = src/global
   url  = https://github.com/phil-stein/global
 
+[submodule "src/text"]
+	path = src/text
+	url = https://github.com/phil-stein/text

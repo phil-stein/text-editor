@@ -35,7 +35,6 @@ CMakeFiles/text_editor.dir/C_/Workspace/C/text_editor/src/app/app.c.obj: \
  C:/PROGRA~1/mingw64/x86_64-w64-mingw32/include/stddef.h \
  C:/Workspace/C/text_editor/src/text/text_inc.h \
  C:/Workspace/C/text_editor/src/text/text.h \
- C:/Workspace/C/text_editor/src/core/texture.h \
  C:/Workspace/C/text_editor/src/math/math_inc.h \
  C:/Workspace/C/text_editor/src/math/math_m.h \
  C:/Workspace/C/text_editor/src/math/math_inc.h \
@@ -50,7 +49,6 @@ CMakeFiles/text_editor.dir/C_/Workspace/C/text_editor/src/app/app.c.obj: \
  C:/Workspace/C/text_editor/external/FREETYPE/ft2build.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/config/ftheader.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/freetype.h \
- C:/Workspace/C/text_editor/external/FREETYPE/ft2build.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/config/ftconfig.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/config/ftoption.h \
  C:/Workspace/C/text_editor/external/FREETYPE/freetype/config/ftstdlib.h \
